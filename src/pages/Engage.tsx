@@ -165,7 +165,7 @@ export function GlobalPresence() {
                 <span className="gp3-branch__label">{o.label}</span>
                 <h3>{o.country}</h3>
                 <p>{o.address}</p>
-                {'mapUrl' in o && o.mapUrl && <a href={o.mapUrl as string} target="_blank" rel="noopener noreferrer" className="gp3-branch__link">Open in Maps <Arrow /></a>}
+                {!/to be confirmed/i.test(o.address) && <a href={'mapUrl' in o && o.mapUrl ? (o.mapUrl as string) : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(o.address)}`} target="_blank" rel="noopener noreferrer" className="gp3-branch__link">Open in Maps <Arrow /></a>}
               </div>
             ))}
           </div>
@@ -302,7 +302,7 @@ export function Contact() {
                   <li key={o.country}>
                     <strong>{o.country}</strong> <span className="muted">— {o.label}</span><br />
                     <span style={{ fontSize: 14.5 }}>{o.address}</span><br />
-                    <a className="text-link" href={'mapUrl' in o && o.mapUrl ? o.mapUrl : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(o.address)}`} target="_blank" rel="noopener noreferrer">Open in Google Maps <Arrow /></a>
+                    {!/to be confirmed/i.test(o.address) && <a className="text-link" href={'mapUrl' in o && o.mapUrl ? o.mapUrl : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(o.address)}`} target="_blank" rel="noopener noreferrer">Open in Google Maps <Arrow /></a>}
                   </li>
                 ))}
               </ul>
@@ -320,7 +320,10 @@ export function Contact() {
               <p className="lead">{company.offices[0].address}</p>
               <p className="muted"><a href={`tel:${c.phoneHref}`}>{c.phone}</a> · <a href={`mailto:${c.email}`}>{c.email}</a></p>
             </div>
-            <a className="btn btn--blue" href={company.offices[0].mapUrl} target="_blank" rel="noopener noreferrer">Open in Google Maps <Arrow /></a>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <a className="btn btn--blue" href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent('ASEC Automation, 9 Street 286, El Basatin, Cairo 4234220, Egypt')}`} target="_blank" rel="noopener noreferrer">Get directions <Arrow /></a>
+              <a className="btn btn--outline" href={company.offices[0].mapUrl} target="_blank" rel="noopener noreferrer">Open in Google Maps</a>
+            </div>
           </div>
           <div className="media" style={{ aspectRatio: '21 / 9', minHeight: 320, background: '#e6e9f2' }}>
             <iframe

@@ -4,6 +4,7 @@ import { useRevealAll } from './lib/hooks'
 import { Header, Footer, ReviewBanner, WhatsAppButton } from './components/Layout'
 import { matchRoute, fullTitle } from './routes'
 import { REVIEW_MODE } from './content/company'
+import { setLang, langOf, t } from './i18n'
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { err: boolean }> {
   state = { err: false }
@@ -22,12 +23,16 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { err
 
 function Shell() {
   const { path } = useRouter()
+  const lang = langOf(path)
+  setLang(lang)
   const route = matchRoute(path)
   useRevealAll(path)
   useEffect(() => {
     document.title = fullTitle(route)
-    document.querySelector('meta[name="description"]')?.setAttribute('content', route.description)
-  }, [route])
+    document.querySelector('meta[name="description"]')?.setAttribute('content', t(route.description))
+    document.documentElement.lang = lang
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'
+  }, [route, lang])
   const bare = route.path === '/404'
   return (
     <div className={REVIEW_MODE ? undefined : 'hide-review'}>

@@ -6,6 +6,8 @@ import { company, REVIEW_MODE } from '../content/company'
 import { services } from '../content/expertise'
 import available from '../config/available-images.json'
 import { Arrow } from './ui'
+import { href } from '../lib/router'
+import { getLang, stripLang, withLang, tr } from '../i18n'
 
 const AV = available as Record<string, string>
 
@@ -61,11 +63,24 @@ function NavDropdown({ item }: { item: NavItem }) {
 
 export function WhatsAppButton() {
   if (!company.whatsapp) return null
-  const msg = encodeURIComponent('Hello ASEC Automation, I would like to ask about your services.')
+  const msg = encodeURIComponent(tr('Hello ASEC Automation, I would like to ask about your services.'))
   return (
     <a className="wa-btn" href={`https://wa.me/${company.whatsapp}?text=${msg}`} target="_blank" rel="noopener noreferrer" aria-label="Chat with ASEC Automation on WhatsApp">
       <svg viewBox="0 0 32 32" aria-hidden><path fill="currentColor" d="M16 3C9 3 3.3 8.6 3.3 15.6c0 2.4.7 4.7 1.9 6.7L3 29l6.9-2.2c1.9 1 4 1.6 6.1 1.6 7 0 12.7-5.7 12.7-12.7S23 3 16 3zm0 23.2c-1.9 0-3.8-.5-5.4-1.5l-.4-.2-4.1 1.3 1.3-4-.3-.4c-1.1-1.7-1.7-3.7-1.7-5.7C5.4 9.8 10.2 5.1 16 5.1s10.6 4.7 10.6 10.5S21.8 26.2 16 26.2zm5.8-7.9c-.3-.2-1.9-.9-2.2-1-.3-.1-.5-.2-.7.2-.2.3-.8 1-1 1.2-.2.2-.4.2-.7.1-.3-.2-1.3-.5-2.5-1.6-.9-.8-1.6-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.5-.6c.2-.2.2-.3.3-.6.1-.2 0-.4 0-.6l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.1-1.2 2.8s1.2 3.3 1.4 3.5c.2.2 2.4 3.7 5.8 5.1 2.9 1.1 3.4.9 4.1.8.6-.1 1.9-.8 2.2-1.5.3-.7.3-1.4.2-1.5-.1-.1-.3-.2-.6-.4z"/></svg>
       <span>WhatsApp</span>
+    </a>
+  )
+}
+
+/** EN / عربي switch — links to the same page in the other language (full page load so lang/dir update). */
+export function LangSwitch({ className = '' }: { className?: string }) {
+  const { path } = useRouter()
+  const ar = getLang() === 'ar'
+  const target = withLang(stripLang(path), ar ? 'en' : 'ar')
+  return (
+    <a className={`lang-switch ${className}`} href={href(target)} hrefLang={ar ? 'en' : 'ar'} lang={ar ? 'en' : 'ar'}
+      aria-label={ar ? 'View this page in English' : 'عرض هذه الصفحة بالعربية'}>
+      {ar ? 'English' : 'عربي'}
     </a>
   )
 }
@@ -92,8 +107,9 @@ export function Header() {
           <nav className="nav" aria-label="Main">
             {NAV.map((n) => n.mega
               ? <NavDropdown key={n.label} item={n} />
-              : <div className="nav__item" key={n.label}><Link to={n.to} className="nav__link" aria-current={n.to !== '/' && path.startsWith(n.to + '/') ? 'page' : undefined}>{n.label}</Link></div>)}
+              : <div className="nav__item" key={n.label}><Link to={n.to} className="nav__link" aria-current={n.to !== '/' && stripLang(path).startsWith(n.to + '/') ? 'page' : undefined}>{n.label}</Link></div>)}
           </nav>
+          <LangSwitch className="header__lang" />
           <Link to="/contact" className="btn btn--primary header__cta">Contact Us</Link>
           <button className="burger" aria-label="Open menu" aria-expanded={mobile} onClick={() => setMobile(true)}><LuMenu size={22} aria-hidden /></button>
         </div>
@@ -111,6 +127,7 @@ export function Header() {
             ))}
           </ul>
           <Link to="/contact" className="btn btn--primary">Contact Us <Arrow /></Link>
+          <LangSwitch className="lang-switch--mobile" />
         </div>
       )}
     </>

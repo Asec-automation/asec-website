@@ -39,7 +39,8 @@ console.log(`images: ${Object.keys(available).length}/${Object.keys(slotPaths).l
 fs.rmSync(out, { recursive: true, force: true })
 fs.mkdirSync(out, { recursive: true })
 const common = {
-  bundle: true, jsx: 'automatic', loader: { '.tsx': 'tsx', '.ts': 'ts' }, logLevel: 'warning',
+  bundle: true, jsx: 'automatic', jsxImportSource: '@i18n',
+  alias: { '@i18n/jsx-runtime': path.join(root, 'src/i18n/jsx-runtime.ts'), '@i18n/jsx-dev-runtime': path.join(root, 'src/i18n/jsx-dev-runtime.ts') }, loader: { '.tsx': 'tsx', '.ts': 'ts' }, logLevel: 'warning',
   define: { __ROUTER_MODE__: JSON.stringify(MODE), 'process.env.NODE_ENV': '"production"' },
 }
 const client = await build({
@@ -55,23 +56,37 @@ const rel = (f) => '/' + path.relative(out, path.join(process.cwd(), f)).split(p
 // ---------- 3. server bundle for prerender ----------
 const ssrOut = path.join(root, '.ssr/server.mjs')
 await build({ ...common, entryPoints: [path.join(root, 'src/server.tsx')], outfile: ssrOut, platform: 'node', format: 'esm', loader: { ...common.loader, '.css': 'empty' }, external: ['react', 'react-dom'] })
-const { render, paths, indexable } = await import(pathToFileURL(ssrOut).href + `?t=${Date.now()}`)
+const { render, paths, indexable, seenStrings } = await import(pathToFileURL(ssrOut).href + `?t=${Date.now()}`)
 
 const company = fs.readFileSync(path.join(root, 'src/content/company.ts'), 'utf8')
 const siteUrl = (company.match(/siteUrl:\s*'([^']+)'/) || [])[1] || ''
+const cfToken = (company.match(/cloudflareAnalyticsToken:\s*'([^']*)'/) || [])[1] || ''
+const gVerify = (company.match(/googleSiteVerification:\s*'([^']*)'/) || [])[1] || ''
+const orgLd = {
+  '@context': 'https://schema.org', '@type': 'ProfessionalService', '@id': `${siteUrl}/#organization`,
+  name: 'ASEC Automation', alternateName: 'ASA', url: siteUrl || undefined,
+  logo: `${siteUrl}/images/brand/logo-dark-full.png`, image: `${siteUrl}/images/brand/logo-dark-full.png`,
+  description: 'Industrial automation, electrical and control systems engineering, LV panel building and PV solar EPC for heavy industry across the Middle East and Africa.',
+  email: 'contact@asecautomation.com', telephone: '+20 2 2704 2601',
+  address: { '@type': 'PostalAddress', streetAddress: '9 Street 286, El-Basatin Sharkeya', addressLocality: 'Maadi, Cairo', postalCode: '4234220', addressCountry: 'EG' },
+  areaServed: ['Egypt', 'Saudi Arabia', 'United Arab Emirates', 'Libya', 'Middle East', 'Africa'],
+  knowsAbout: ['Industrial automation', 'PLC', 'SCADA', 'DCS', 'Electrical engineering', 'LV panel building', 'PV solar EPC', 'Cement industry'],
+}
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;')
 const og = available.OG_DEFAULT_01 ? `${siteUrl}${available.OG_DEFAULT_01}` : ''
 
-const page = ({ html, title, description, image, type, noindex }, p) => {
+const page = ({ html, title, description, image, type, noindex, lang = 'en' }, p) => {
+  const enPath = p.startsWith('/ar') ? (p.slice(3) || '/') : p
+  const arPath = enPath === '/' ? '/ar' : '/ar' + enPath
   const ogImg = image && available[image] ? `${siteUrl}${available[image]}` : og
   return `<!doctype html>
-<html lang="en" dir="ltr" class="no-js">
+<html lang="${lang}" dir="${lang === 'ar' ? 'rtl' : 'ltr'}" class="no-js">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(description)}" />
-${p !== '/404' && !SINGLE && !noindex ? `<link rel="canonical" href="${siteUrl}${p === '/' ? '/' : p}" />` : '<meta name="robots" content="noindex" />'}
+${p !== '/404' && !SINGLE && !noindex ? `<link rel="canonical" href="${siteUrl}${p === '/' ? '/' : p}" />\n<link rel="alternate" hreflang="en" href="${siteUrl}${enPath}" />\n<link rel="alternate" hreflang="ar" href="${siteUrl}${arPath}" />\n<link rel="alternate" hreflang="x-default" href="${siteUrl}${enPath}" />` : '<meta name="robots" content="noindex" />'}
 <meta property="og:type" content="${type || 'website'}" />
 ${!SINGLE && p !== '/404' ? `<meta property="og:url" content="${siteUrl}${p}" />` : ''}
 <meta property="og:site_name" content="ASEC Automation" />
@@ -84,8 +99,10 @@ ${ogImg ? `<meta property="og:image" content="${ogImg}" /><meta name="twitter:im
 <link rel="apple-touch-icon" href="/images/brand/apple-touch-icon.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet" />
-${p === '/' ? `<script type="application/ld+json">${JSON.stringify({ '@context': 'https://schema.org', '@type': 'Organization', name: 'ASEC Automation', url: siteUrl || undefined })}</script>` : ''}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet" />
+${p === '/' ? `<script type="application/ld+json">${JSON.stringify(orgLd)}</script>` : ''}
+${p === '/' && gVerify && !SINGLE ? `<meta name="google-site-verification" content="${gVerify}" />` : ''}
+${cfToken && !SINGLE ? `<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='${JSON.stringify({ token: cfToken })}'></script>` : ''}
 ${SINGLE ? `<style>${outputs['.css']}</style>` : `<link rel="stylesheet" href="${rel(cssFile)}" />`}
 </head>
 <body>
@@ -123,6 +140,12 @@ if (SINGLE) {
   fs.writeFileSync(path.join(out, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${pub.map((p) => `  <url><loc>${siteUrl}${p}</loc></url>`).join('\n')}\n</urlset>\n`)
   fs.writeFileSync(path.join(out, 'robots.txt'), `User-agent: *\nAllow: /\nDisallow: /careers/admin\nDisallow: /api/\nSitemap: ${siteUrl}/sitemap.xml\n`)
   console.log(`prerendered ${paths.length} pages → dist/`)
+  // list every English UI string, and which ones still lack an Arabic translation
+  const ar = JSON.parse(fs.readFileSync(path.join(root, 'src/i18n/ar.json'), 'utf8'))
+  const strings = seenStrings().filter((x) => !/[\u0600-\u06FF]/.test(x))
+  const missing = strings.filter((x) => ar[x] === undefined)
+  fs.writeFileSync(path.join(root, 'src/i18n/strings-en.json'), JSON.stringify(strings, null, 1))
+  console.log(`arabic: ${strings.length - missing.length}/${strings.length} strings translated`)
 }
 fs.rmSync(path.join(root, '.ssr'), { recursive: true, force: true })
 if (SINGLE) fs.writeFileSync(path.join(root, 'src/config/available-images.json'), JSON.stringify(available, null, 2))

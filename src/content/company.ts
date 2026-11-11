@@ -56,7 +56,8 @@ export const company = {
    * form validates input but clearly states that online submission is not
    * yet connected — it never shows a fake success message.
    */
-  formEndpoint: '',
+  /** Contact form → emails contact@ via FormSubmit (activate once from the first email received). */
+  formEndpoint: 'https://formsubmit.co/ajax/contact@asecautomation.com',
   /**
    * Careers applications with CV upload. Use a form service that accepts file
    * uploads and stores them privately (e.g. Basin, Getform or Formspree paid plan).
@@ -66,7 +67,15 @@ export const company = {
   /** WhatsApp number in international format, digits only (e.g. '201001234567'). Empty = button hidden. */
   whatsapp: '',
   /** Public site URL, used for canonical links and the sitemap. */
-  siteUrl: 'https://www.example.com',
+  /** Public web address. Change to 'https://www.asecautomation.com' when the domain is connected. */
+  siteUrl: 'https://asec-website.sara-sabry.workers.dev',
+  /**
+   * Visitor tracking & Google.
+   *  - cloudflareAnalyticsToken: Cloudflare → Analytics & Logs → Web Analytics → Add a site → copy the "token" from the snippet.
+   *  - googleSiteVerification: Google Search Console → HTML tag method → copy the content="…" value.
+   */
+  cloudflareAnalyticsToken: '',
+  googleSiteVerification: '',
 }
 
 /**

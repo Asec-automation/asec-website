@@ -1,3 +1,4 @@
+import { t } from './i18n'
 import React from 'react'
 import Home from './pages/Home'
 import { About, Sustainability, Partners } from './pages/Company'
@@ -26,9 +27,11 @@ const base: RouteDef[] = [
 
 export const ROUTES: RouteDef[] = [
   ...base,
+  // Arabic copies of every public page (/ar, /ar/about, …)
+  ...base.filter((r) => !r.noindex).map((r) => ({ ...r, path: r.path === '/' ? '/ar' : '/ar' + r.path })),
 ]
 
 export const NOT_FOUND: RouteDef = { path: '/404', title: 'Page not found', description: 'Page not found.', render: () => <NotFound /> }
 
 export const matchRoute = (path: string) => ROUTES.find((r) => r.path === path) ?? NOT_FOUND
-export const fullTitle = (r: RouteDef) => (r.path === '/' ? r.title : `${r.title} | ASEC Automation`)
+export const fullTitle = (r: RouteDef) => (r.path === '/' || r.path === '/ar' ? t(r.title) : `${t(r.title)} | ${t('ASEC Automation')}`)

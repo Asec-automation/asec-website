@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { getLang, withLang } from '../i18n'
 
 /**
  * Minimal router. 'history' mode (clean URLs, used for real hosting with
@@ -49,9 +50,10 @@ export const useRouter = () => useContext(RouterCtx)
 export const href = (to: string) => (MODE === 'hash' ? `#${toHash(to)}` : to)
 
 type LinkProps = React.AnchorHTMLAttributes<HTMLAnchorElement> & { to: string }
-export function Link({ to, onClick, children, ...rest }: LinkProps) {
+export function Link({ to: rawTo, onClick, children, ...rest }: LinkProps) {
   const { path, navigate } = useRouter()
-  const external = /^(https?:|mailto:|tel:)/.test(to)
+  const external = /^(https?:|mailto:|tel:)/.test(rawTo)
+  const to = !external && rawTo.startsWith('/') && getLang() === 'ar' && !/^\/ar(\/|$|#)/.test(rawTo) ? withLang(rawTo.split('#')[0], 'ar') + (rawTo.includes('#') ? '#' + rawTo.split('#')[1] : '') : rawTo
   const active = !external && (to === '/' ? path === '/' : path === to || path.startsWith(to + '/'))
   return (
     <a

@@ -43,8 +43,9 @@ export function ContactForm({ variant = 'general' }: { variant?: 'general' | 'bu
     setState('sending')
     try {
       const { website, ...payload } = v
-      const res = await fetch(company.formEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ ...payload, formType: variant }) })
-      if (!res.ok) throw new Error(String(res.status))
+      const res = await fetch(company.formEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ ...payload, formType: variant, _subject: `Website inquiry — ${payload.category || 'General'} — ${payload.name}`, _template: 'table', _captcha: 'false', _replyto: payload.email }) })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || String((data as { success?: unknown }).success) === 'false') throw new Error(String(res.status))
       setState('sent'); setV(empty)
     } catch { setState('error') }
   }
@@ -97,7 +98,7 @@ export function ContactForm({ variant = 'general' }: { variant?: 'general' | 'bu
             Your message has <strong>not</strong> been sent: online submissions are not connected yet. The site administrator needs to add a form endpoint in <code>src/content/company.ts</code>.
           </span></div>
         )}
-        {state === 'error' && <div className="notice notice--err">Sorry — your message could not be delivered. Please try again later.</div>}
+        {state === 'error' && <div className="notice notice--err">Sorry — your message could not be delivered. Please try again, or email us at <a href={`mailto:${company.contact.email}`} style={{ textDecoration: 'underline' }}>{company.contact.email}</a>.</div>}
       </div>
       <div><button className="btn btn--blue" type="submit" disabled={state === 'sending'}>{state === 'sending' ? 'Sending…' : 'Send message'} <Arrow /></button></div>
     </form>
