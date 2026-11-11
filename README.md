@@ -1,6 +1,6 @@
 # ASEC Automation — Corporate Website (free static edition)
 
-A fast, prerendered React + TypeScript website you can host **for free** on Vercel, Netlify,
+A fast, prerendered React + TypeScript website you can host **for free** on Cloudflare Pages, Netlify,
 Cloudflare Pages or GitHub Pages. No server, database or paid hosting is needed.
 
 > This is the **static edition** of the master specification. It covers the full public
@@ -21,7 +21,7 @@ Edit files in `src/`, run `npm run build` again, and refresh.
 ## Deploy for free
 The `dist/` folder is a complete static website (one prerendered HTML file per page).
 
-**Vercel** — import the GitHub repo → Framework preset: *Other* → Build command `npm run build`
+**Cloudflare Pages** — import the GitHub repo → Framework preset: *Other* → Build command `npm run build`
 → Output directory `dist`. (`vercel.json` is included.)
 
 **Netlify** — New site from Git → Build command `npm run build` → Publish directory `dist`.
@@ -79,19 +79,29 @@ and tells visitors clearly that online submission isn't connected — it never p
 React 19 + TypeScript, bundled with esbuild, prerendered to static HTML at build time (good for SEO),
 hand-written CSS design system, `react-icons` (Lucide set). No tracking, no cookies.
 
+## Hosting — Cloudflare Pages (free, commercial use allowed)
+
+1. Sign in at **dash.cloudflare.com** → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**.
+2. Choose the **Asec-automation/asec-website** repository.
+3. Build settings: **Framework preset** None · **Build command** `npm run build` · **Build output directory** `dist`.
+4. **Save and Deploy**. Every push to `main` redeploys automatically.
+5. Custom domain: project → **Custom domains** → add `asecautomation.com` and follow the DNS steps.
+
 ## Careers admin (HR login)
 
 HR manages job openings at **/careers/admin** (not linked from the menu, hidden from search engines).
 They sign in with a password, then add, edit, hide, reorder or delete jobs, or import/export the list
 as an Excel-compatible CSV. Saved changes appear on the Careers page immediately.
+The server code is `functions/api/careers.js` (a Cloudflare Pages Function).
 
-One-time setup on Vercel:
-1. **Storage** — Vercel → your project → Storage → *Create* → choose **Upstash / Redis (KV)**
-   (free tier) → connect it to this project. This adds `KV_REST_API_URL` and `KV_REST_API_TOKEN`.
-2. **Password** — Settings → Environment Variables → add
+One-time setup in Cloudflare:
+1. **Storage** — Workers & Pages → **KV** → **Create a namespace** (name it e.g. `asec-careers`).
+2. Your Pages project → **Settings → Bindings** → **Add** → **KV namespace**:
+   variable name `CAREERS_KV`, namespace `asec-careers`.
+3. **Settings → Variables and Secrets** → add two **Secrets**:
    - `CAREERS_ADMIN_PASSWORD` = the password for HR (12+ characters)
    - `CAREERS_TOKEN_SECRET` = any long random text (e.g. 40 random characters)
-3. **Redeploy** the project.
+4. **Deployments** → **Retry deployment** (or push any change) so the settings take effect.
 
 Change the HR password any time by editing `CAREERS_ADMIN_PASSWORD` and redeploying.
 Sessions last 8 hours; after 10 wrong passwords an address is blocked for 15 minutes.
