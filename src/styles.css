@@ -1715,3 +1715,15 @@ html { scroll-padding-top: 96px; }
 .ca-job__form .ca-f--wide { grid-column: 1 / -1 !important; }
 .ca-job__form .ca-f:nth-last-child(1), .ca-job__form .ca-f:nth-last-child(2) { grid-column: span 3 !important; }
 @media (max-width: 760px) { .ca-job__form { grid-template-columns: 1fr !important; } .ca-job__form .ca-f { grid-column: 1 / -1 !important; } }
+
+/* project cards with photo gallery */
+.pc { display: grid; grid-template-rows: auto auto 1fr; }
+.pc__media { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: #e9eef5; }
+.pc__media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pc__count { position: absolute; right: 12px; bottom: 12px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; color: #fff; background: rgba(4,15,71,.75); }
+.pc__thumbs { display: flex; gap: 6px; padding: 8px 10px; background: #f4f7fb; border-bottom: 1px solid #e5eaf1; overflow-x: auto; }
+.pc__thumbs button { flex: none; width: 56px; height: 42px; padding: 0; border: 2px solid transparent; border-radius: 6px; overflow: hidden; cursor: pointer; background: none; opacity: .7; transition: opacity .2s, border-color .2s; }
+.pc__thumbs button img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pc__thumbs button:hover { opacity: 1; }
+.pc__thumbs button.is-on { border-color: var(--blue); opacity: 1; }
+.pc__body { padding: 22px 24px 26px; display: grid; gap: 10px; align-content: start; }

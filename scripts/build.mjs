@@ -98,9 +98,10 @@ ${SINGLE ? `<script type="module">${outputs['.js'].replace(/<\/script/g, '<\\/sc
 if (SINGLE) {
   // Inline gallery / project photos (referenced by path in content) as data URIs.
   const inline = (txt) => {
-    for (const sub of ['gallery', 'projects', 'industries/tiles', 'industries', 'tech', 'global/regions', 'home']) {
+    for (const sub of ['gallery', 'projects', 'projects/refs', 'tools', 'industries/tiles', 'industries', 'tech', 'global/regions', 'home']) {
       const dir = path.join(root, 'public/images', sub)
       for (const f of fs.existsSync(dir) ? fs.readdirSync(dir) : []) {
+        if (!mime[path.extname(f)]) continue
         const ref = `/images/${sub}/${f}`
         if (txt.includes(ref)) txt = txt.split(ref).join(`data:${mime[path.extname(f)]};base64,${readImg(path.join('images', sub, f)).toString('base64')}`)
       }

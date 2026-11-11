@@ -77,6 +77,10 @@ export interface Project {
   photoFocus?: string
   /** True for AI-generated / illustrative images (shows an "Illustration" tag). */
   illustrative?: boolean
+  /** Extra project photos (shown as thumbnails). */
+  photos?: string[]
+  /** Shown instead of year when a project spans years, e.g. '2024–2025'. */
+  period?: string
 }
 /**
  * Selected projects from ASEC's Company Profile 2025 ("Previous projects — selected sample"

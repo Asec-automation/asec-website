@@ -3,5 +3,3 @@ dist/
 preview/
 .ssr/
 .preview-cache/
-.vercel
-.env*

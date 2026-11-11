@@ -11,7 +11,7 @@ import { ApplicationForm } from '../components/ApplicationForm'
 /* ============================== PROJECTS ============================== */
 export function Projects() {
   const [q, setQ] = useState(''); const [country, setCountry] = useState(''); const [industry, setIndustry] = useState(''); const [year, setYear] = useState('')
-  const opts = (k: 'country' | 'industry') => Array.from(new Set(projects.map((p) => p[k]))).sort()
+  const opts = (k: 'country' | 'industry') => Array.from(new Set(projects.map((p) => p[k]).filter(Boolean))).sort()
   const years = Array.from(new Set(projects.map((p) => p.year).filter(Boolean))).sort().reverse()
   const list = useMemo(() => projects.filter((p) =>
     (!q || `${p.title} ${p.summary} ${p.technologies.join(' ')}`.toLowerCase().includes(q.toLowerCase())) &&
@@ -38,19 +38,7 @@ export function Projects() {
             <EmptyState icon="folder" title="Project references coming soon" text="Our latest project references will be published here shortly." />
           ) : list.length === 0 ? <p className="muted">No projects match these filters.</p> : (
             <div className="grid grid-3">{list.map((p) => (
-              <article key={p.slug} id={p.slug} className="x-card reveal" style={{ padding: 0, scrollMarginTop: 100 }}>
-                {p.photo
-                  ? <div className="media" style={{ aspectRatio: '4/3', borderRadius: 0, position: 'relative' }}><img src={p.photo} alt="" loading="lazy" style={{ objectPosition: p.photoFocus }} />{p.illustrative && <span className="illus-tag">Illustration</span>}</div>
-                  : <div className="proj-band"><span>{p.industry}</span><b>{p.country}</b></div>}
-                <div style={{ padding: 26, display: 'grid', gap: 10 }}>
-                  <span className="eyebrow">{p.country}{p.city ? ` · ${p.city}` : ''} · {p.industry}</span>
-                  <h2 className="h3">{p.title}</h2>
-                  <p>{p.summary}</p>
-                  <dl className="kv" style={{ gridTemplateColumns: '110px 1fr', fontSize: 13.5 }}>
-                    {p.clientVisible && p.clientName && <><dt>Client</dt><dd>{p.clientName}</dd></>}<dt>Scope</dt><dd>{p.solution}</dd>{p.year && <><dt>Year</dt><dd>{p.year}</dd></>}
-                  </dl>
-                </div>
-              </article>
+              <ProjectCard key={p.slug} p={p} />
             ))}</div>
           )}
           <div style={{ marginTop: 'clamp(70px, 9vw, 110px)' }} id="clients">
@@ -184,6 +172,32 @@ export function GlobalPresence() {
         </div>
       </section>
     </>
+  )
+}
+
+function ProjectCard({ p }: { p: (typeof projects)[number] }) {
+  const pics = p.photos && p.photos.length ? p.photos : p.photo ? [p.photo] : []
+  const [cur, setCur] = useState(0)
+  const where = [p.city, p.country].filter(Boolean).join(', ')
+  return (
+    <article id={p.slug} className="x-card reveal pc" style={{ padding: 0, scrollMarginTop: 100 }}>
+      {pics.length > 0
+        ? <div className="pc__media"><img src={pics[cur]} alt={`${p.title} — photo ${cur + 1}`} loading="lazy" />{p.illustrative && <span className="illus-tag">Illustration</span>}{pics.length > 1 && <span className="pc__count">{cur + 1} / {pics.length}</span>}</div>
+        : <div className="proj-band"><span>{p.industry}</span><b>{p.country}</b></div>}
+      {pics.length > 1 && (
+        <div className="pc__thumbs">{pics.map((src, i) => (
+          <button key={src} type="button" className={i === cur ? 'is-on' : ''} onClick={() => setCur(i)} aria-label={`Show photo ${i + 1}`}><img src={src} alt="" loading="lazy" /></button>
+        ))}</div>
+      )}
+      <div className="pc__body">
+        <span className="eyebrow">{[p.clientVisible && p.clientName, p.period ?? p.year].filter(Boolean).join(' · ')}</span>
+        <h2 className="h3">{p.title}</h2>
+        <p>{p.summary}</p>
+        <dl className="kv" style={{ gridTemplateColumns: '90px 1fr', fontSize: 13.5 }}>
+          {where && <><dt>Location</dt><dd>{where}</dd></>}<dt>Sector</dt><dd>{p.industry}</dd><dt>Scope</dt><dd>{p.solution}</dd>
+        </dl>
+      </div>
+    </article>
   )
 }
 
