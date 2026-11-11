@@ -1,0 +1,15 @@
+{
+  // Cloudflare Workers config for the ASEC website (free plan).
+  "name": "asec-website",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/api/*"]
+  }
+  // Careers job storage — added once the KV namespace exists:
+  // "kv_namespaces": [{ "binding": "CAREERS_KV", "id": "<namespace id>" }]
+}

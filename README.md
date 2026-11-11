@@ -87,6 +87,12 @@ hand-written CSS design system, `react-icons` (Lucide set). No tracking, no cook
 4. **Save and Deploy**. Every push to `main` redeploys automatically.
 5. Custom domain: project → **Custom domains** → add `asecautomation.com` and follow the DNS steps.
 
+### If the project was created as a Cloudflare **Worker** (address ends in `.workers.dev`)
+`wrangler.jsonc` and `worker/index.js` set this up: the Worker serves `dist/` and the Careers API.
+Build command `npm run build`, deploy command `npx wrangler deploy`. The KV binding must be written
+in `wrangler.jsonc` (`kv_namespaces`), because bindings added only in the dashboard are replaced on each deploy.
+Secrets (`CAREERS_ADMIN_PASSWORD`, `CAREERS_TOKEN_SECRET`) are set in the dashboard and are kept.
+
 ## Careers admin (HR login)
 
 HR manages job openings at **/careers/admin** (not linked from the menu, hidden from search engines).
