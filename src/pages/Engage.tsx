@@ -356,7 +356,6 @@ export function Contact() {
             </div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <a className="btn btn--blue" href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(HQ_MAP_QUERY)}`} target="_blank" rel="noopener noreferrer">Get directions <Arrow /></a>
-              <a className="btn btn--outline" href={company.offices[0].mapUrl} target="_blank" rel="noopener noreferrer">Open in Google Maps</a>
             </div>
           </div>
           <HqMap />
