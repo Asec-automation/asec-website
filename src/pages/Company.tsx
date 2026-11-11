@@ -1,4 +1,5 @@
 import React from 'react'
+import { LuDownload } from 'react-icons/lu'
 import { Link } from '../lib/router'
 import { Img, Arrow, SectionHead, StatusBadge, CTASection, EmptyState, PageHero, Icon, Gallery, Stats, PartnerTile, PhotoTiles } from '../components/ui'
 import { company, facts, REVIEW_MODE } from '../content/company'
@@ -7,6 +8,38 @@ import { services } from '../content/expertise'
 import { WorldMap } from '../components/WorldMap'
 import { toolGroups } from '../content/software'
 import AV from '../config/available-images.json'
+
+/* ============================== CERTIFICATES ============================== */
+const CERTS: { name: string; title: string; text: string; icon: string }[] = [
+  { name: 'ISO 9001', title: 'ISO 9001', text: 'Quality management system', icon: 'gear' },
+  { name: 'ISO 14001', title: 'ISO 14001', text: 'Environmental management system', icon: 'recycle' },
+  { name: 'ISO 45001', title: 'ISO 45001', text: 'Occupational health & safety management system', icon: 'users' },
+  { name: 'Siemens System Integrator', title: 'Siemens System Integrator', text: 'Engineering, programming and commissioning of Siemens control systems', icon: 'cpu' },
+  { name: 'Schneider Electric Certified Panel Builder', title: 'Schneider Electric Certified Panel Builder', text: 'Low-voltage switchboards and control panels built to Schneider Electric standards', icon: 'layers' },
+]
+export function Certificates() {
+  return (
+    <section className="section" aria-labelledby="certs-title">
+      <div className="container">
+        <SectionHead eyebrow="Certificates & accreditations" title={<span id="certs-title">Certified quality, safety and partnerships.</span>}
+          aside={REVIEW_MODE ? <StatusBadge status="proposed" label="Certificate scans needed" /> : undefined} />
+        <div className="cert-grid">
+          {CERTS.map((c, i) => {
+            const file = company.certificateFiles[c.name]
+            return (
+              <div key={c.name} className="cert-card reveal" style={{ transitionDelay: `${(i % 3) * 70}ms` }}>
+                <span className="cert-card__icon"><Icon name={c.icon} /></span>
+                <h3>{c.title}</h3>
+                <p>{c.text}</p>
+                {file && <a className="text-link" href={file} target="_blank" rel="noopener">View certificate <Arrow /></a>}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </section>
+  )
+}
 
 /* ============================== ABOUT ============================== */
 export function About() {
@@ -25,6 +58,9 @@ export function About() {
             <p className="muted">Over more than 25 years of success, ASA has become recognised as an integrated electrical and automation EPC contractor serving infrastructure and industry across MENA and Asia Pacific.</p>
             <div className="cert-strip"><strong>CERTIFIED</strong>{facts.certifications.map((c) => <span key={c}>{c}</span>)}</div>
             <p className="muted" style={{ fontSize: 14 }}>Award: {facts.award}</p>
+            {company.profilePdf
+              ? <div><a className="btn btn--blue" href={company.profilePdf} download target="_blank" rel="noopener">Download our profile (PDF) <LuDownload aria-hidden /></a></div>
+              : REVIEW_MODE && <div><StatusBadge status="missing" label="Company profile PDF needed for the download button" /></div>}
           </div>
           <div className="reveal" style={{ display: 'grid', gap: 18 }}>
             <Img id="ABOUT_COMPANY_01" style={{ aspectRatio: '4 / 3' }} focal="50% 62%" />
@@ -48,6 +84,8 @@ export function About() {
           </div>
         </div>
       </section>
+
+      <Certificates />
 
       <section className="section section--soft">
         <div className="container">

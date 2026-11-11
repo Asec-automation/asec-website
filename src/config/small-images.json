@@ -1,0 +1,174 @@
+{
+ "/images/about/hero.webp": {
+  "small": "/images/about/hero-800.webp",
+  "w": 1032
+ },
+ "/images/about/hse.webp": {
+  "small": "/images/about/hse-800.webp",
+  "w": 1275
+ },
+ "/images/about/people.webp": {
+  "small": "/images/about/people-800.webp",
+  "w": 1440
+ },
+ "/images/careers/culture.webp": {
+  "small": "/images/careers/culture-800.webp",
+  "w": 1249
+ },
+ "/images/careers/hero.webp": {
+  "small": "/images/careers/hero-800.webp",
+  "w": 1679
+ },
+ "/images/cement/hero.webp": {
+  "small": "/images/cement/hero-800.webp",
+  "w": 1600
+ },
+ "/images/contact/hero.webp": {
+  "small": "/images/contact/hero-800.webp",
+  "w": 1600
+ },
+ "/images/expertise/analytics.webp": {
+  "small": "/images/expertise/analytics-800.webp",
+  "w": 1672
+ },
+ "/images/expertise/automation.webp": {
+  "small": "/images/expertise/automation-800.webp",
+  "w": 1672
+ },
+ "/images/expertise/digital.webp": {
+  "small": "/images/expertise/digital-800.webp",
+  "w": 1671
+ },
+ "/images/expertise/eai.webp": {
+  "small": "/images/expertise/eai-800.webp",
+  "w": 1672
+ },
+ "/images/expertise/electrical.webp": {
+  "small": "/images/expertise/electrical-800.webp",
+  "w": 1672
+ },
+ "/images/expertise/hero.webp": {
+  "small": "/images/expertise/hero-800.webp",
+  "w": 1639
+ },
+ "/images/expertise/motors.webp": {
+  "small": "/images/expertise/motors-800.webp",
+  "w": 1671
+ },
+ "/images/expertise/plc-scada.webp": {
+  "small": "/images/expertise/plc-scada-800.webp",
+  "w": 1672
+ },
+ "/images/expertise/process-control.webp": {
+  "small": "/images/expertise/process-control-800.webp",
+  "w": 1672
+ },
+ "/images/expertise/solar.webp": {
+  "small": "/images/expertise/solar-800.webp",
+  "w": 1672
+ },
+ "/images/expertise/testing.webp": {
+  "small": "/images/expertise/testing-800.webp",
+  "w": 1672
+ },
+ "/images/global/algeria.webp": {
+  "small": "/images/global/algeria-800.webp",
+  "w": 1200
+ },
+ "/images/global/egypt.webp": {
+  "small": "/images/global/egypt-800.webp",
+  "w": 1200
+ },
+ "/images/global/hero.webp": {
+  "small": "/images/global/hero-800.webp",
+  "w": 1440
+ },
+ "/images/global/honduras.webp": {
+  "small": "/images/global/honduras-800.webp",
+  "w": 1200
+ },
+ "/images/global/iraq.webp": {
+  "small": "/images/global/iraq-800.webp",
+  "w": 1200
+ },
+ "/images/global/jordan.webp": {
+  "small": "/images/global/jordan-800.webp",
+  "w": 1200
+ },
+ "/images/global/kenya.webp": {
+  "small": "/images/global/kenya-800.webp",
+  "w": 1200
+ },
+ "/images/global/mexico.webp": {
+  "small": "/images/global/mexico-800.webp",
+  "w": 1200
+ },
+ "/images/global/morocco.webp": {
+  "small": "/images/global/morocco-800.webp",
+  "w": 1200
+ },
+ "/images/global/philippines.webp": {
+  "small": "/images/global/philippines-800.webp",
+  "w": 1200
+ },
+ "/images/global/saudi-arabia.webp": {
+  "small": "/images/global/saudi-arabia-800.webp",
+  "w": 1200
+ },
+ "/images/global/tanzania.webp": {
+  "small": "/images/global/tanzania-800.webp",
+  "w": 1200
+ },
+ "/images/global/uae.webp": {
+  "small": "/images/global/uae-800.webp",
+  "w": 1200
+ },
+ "/images/global/uganda.webp": {
+  "small": "/images/global/uganda-800.webp",
+  "w": 1200
+ },
+ "/images/home/cta-bg.webp": {
+  "small": "/images/home/cta-bg-800.webp",
+  "w": 1600
+ },
+ "/images/home/home-hero.webp": {
+  "small": "/images/home/home-hero-800.webp",
+  "w": 1440
+ },
+ "/images/innovation/hero.webp": {
+  "small": "/images/innovation/hero-800.webp",
+  "w": 1600
+ },
+ "/images/partners/hero.webp": {
+  "small": "/images/partners/hero-800.webp",
+  "w": 1600
+ },
+ "/images/projects/ezz-steel-ccr.webp": {
+  "small": "/images/projects/ezz-steel-ccr-800.webp",
+  "w": 1600
+ },
+ "/images/projects/hero.webp": {
+  "small": "/images/projects/hero-800.webp",
+  "w": 1966
+ },
+ "/images/projects/hima-ccr.webp": {
+  "small": "/images/projects/hima-ccr-800.webp",
+  "w": 1600
+ },
+ "/images/projects/oggaz-ccr.webp": {
+  "small": "/images/projects/oggaz-ccr-800.webp",
+  "w": 1600
+ },
+ "/images/solutions/hero.webp": {
+  "small": "/images/solutions/hero-800.webp",
+  "w": 1672
+ },
+ "/images/sustainability/hero.webp": {
+  "small": "/images/sustainability/hero-800.webp",
+  "w": 1440
+ },
+ "/images/sustainability/solar.webp": {
+  "small": "/images/sustainability/solar-800.webp",
+  "w": 1228
+ }
+}

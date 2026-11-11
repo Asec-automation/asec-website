@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link } from '../lib/router'
-import { Img, Icon, Arrow, SectionHead, StatusBadge, CTASection, EmptyState, Stats, PartnerTile } from '../components/ui'
+import { Img, Icon, Arrow, SectionHead, StatusBadge, CTASection, EmptyState, Stats, PartnerTile, responsive } from '../components/ui'
 import { company, facts, REVIEW_MODE } from '../content/company'
 import { services } from '../content/expertise'
 import { solutions, industries, countries, projects, partners, sustainabilityThemes } from '../content/catalogue'
@@ -62,7 +62,7 @@ function FeaturedProjects() {
         ) : (
           <div className="grid grid-3">{featured.map((p) => (
             <Link key={p.slug} to={`/projects#${p.slug}`} className="tile reveal" style={{ aspectRatio: '4/5' }}>
-              {p.photo ? <div className="media"><img src={p.photo} alt="" loading="lazy" style={{ objectPosition: p.photoFocus }} /></div> : <Img id={p.image} size="compact" />}
+              {p.photo ? <div className="media"><img src={p.photo} {...responsive(p.photo)} alt="" loading="lazy" style={{ objectPosition: p.photoFocus }} /></div> : <Img id={p.image} size="compact" />}
               {p.illustrative && <span className="illus-tag">Illustration</span>}
               <div className="tile__body"><span className="eyebrow" style={{ color: 'var(--cyan)' }}>{[p.clientVisible && p.clientName, p.country, p.period ?? p.year].filter(Boolean).join(' · ')}</span><h3 className="h3">{p.title}</h3><p>{p.summary}</p></div>
             </Link>

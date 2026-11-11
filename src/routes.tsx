@@ -3,7 +3,8 @@ import React from 'react'
 import Home from './pages/Home'
 import { About, Sustainability, Partners } from './pages/Company'
 import { Expertise, ServiceDetail, Solutions, Industries, Cement, Innovation } from './pages/Capabilities'
-import { Projects, GlobalPresence, Careers, Contact, Privacy, Terms, Cookies } from './pages/Engage'
+import { Projects, ProjectDetail, GlobalPresence, Careers, Contact, Privacy, Terms, Cookies } from './pages/Engage'
+import { myProjects } from './content/my-projects'
 import NotFound from './pages/NotFound'
 import { services } from './content/expertise'
 
@@ -23,6 +24,15 @@ const base: RouteDef[] = [
   { path: '/privacy', title: 'Privacy Policy', description: 'Privacy policy.', render: () => <Privacy /> },
   { path: '/terms', title: 'Terms of Use', description: 'Terms of use.', render: () => <Terms /> },
   { path: '/cookies', title: 'Cookie Preferences', description: 'Cookie information and preferences.', render: () => <Cookies /> },
+  // One page per project, so each can appear in Google on its own
+  ...myProjects.map((p): RouteDef => ({
+    path: `/projects/${p.slug}`,
+    title: p.title,
+    description: p.summary,
+    image: p.photo,
+    type: 'article',
+    render: () => <ProjectDetail slug={p.slug} />,
+  })),
 ]
 
 export const ROUTES: RouteDef[] = [

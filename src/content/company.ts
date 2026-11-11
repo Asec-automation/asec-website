@@ -75,6 +75,16 @@ export const company = {
    *  - googleSiteVerification: Google Search Console → HTML tag method → copy the content="…" value.
    */
   cloudflareAnalyticsToken: '',
+  /** Approved company profile PDF, placed in public/docs/ (e.g. '/docs/ASEC-Automation-Profile.pdf'). Empty = button hidden. */
+  profilePdf: '',
+  /** Certificate scans (PDF or image) in public/docs/certificates/. Empty = card shows without a "View" link. */
+  certificateFiles: {
+    'ISO 9001': '',
+    'ISO 14001': '',
+    'ISO 45001': '',
+    'Siemens System Integrator': '',
+    'Schneider Electric Certified Panel Builder': '',
+  } as Record<string, string>,
   googleSiteVerification: '',
 }
 

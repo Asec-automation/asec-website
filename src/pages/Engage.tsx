@@ -1,12 +1,13 @@
 import React, { useMemo, useState } from 'react'
 import { Link } from '../lib/router'
-import { Img, Arrow, SectionHead, StatusBadge, CTASection, PageHero, EmptyState, Gallery, Icon } from '../components/ui'
+import { Img, Arrow, SectionHead, StatusBadge, CTASection, PageHero, EmptyState, Gallery, Icon, responsive } from '../components/ui'
 import { projects, countries, industries, projectPhotos, clientGroups, type Relationship } from '../content/catalogue'
 import { company, REVIEW_MODE } from '../content/company'
 import { useJobs } from '../content/live-jobs'
 import { WorldMap, markerGroup } from '../components/WorldMap'
 import { ContactForm } from '../components/ContactForm'
 import { ApplicationForm } from '../components/ApplicationForm'
+import { JobAlerts } from '../components/JobAlerts'
 import { API_AVAILABLE } from '../content/live-jobs'
 import { getLang } from '../i18n'
 
@@ -216,7 +217,7 @@ function ProjectCard({ p }: { p: (typeof projects)[number] }) {
   return (
     <article id={p.slug} className="x-card reveal pc" style={{ padding: 0, scrollMarginTop: 100 }}>
       {pics.length > 0
-        ? <div className="pc__media"><img src={pics[cur]} alt={`${p.title} — photo ${cur + 1}`} loading="lazy" />{p.illustrative && <span className="illus-tag">Illustration</span>}{pics.length > 1 && <span className="pc__count">{cur + 1} / {pics.length}</span>}</div>
+        ? <div className="pc__media"><img src={pics[cur]} {...responsive(pics[cur])} alt={`${p.title} — photo ${cur + 1}`} loading="lazy" />{p.illustrative && <span className="illus-tag">Illustration</span>}{pics.length > 1 && <span className="pc__count">{cur + 1} / {pics.length}</span>}</div>
         : <div className="proj-band"><span>{p.industry}</span><b>{p.country}</b></div>}
       {pics.length > 1 && (
         <div className="pc__thumbs">{pics.map((src, i) => (
@@ -225,13 +226,68 @@ function ProjectCard({ p }: { p: (typeof projects)[number] }) {
       )}
       <div className="pc__body">
         <span className="eyebrow">{[p.clientVisible && p.clientName, p.period ?? p.year].filter(Boolean).join(' · ')}</span>
-        <h2 className="h3">{p.title}</h2>
+        <h2 className="h3"><Link to={`/projects/${p.slug}`} className="pc__title-link">{p.title}</Link></h2>
         <p>{p.summary}</p>
         <dl className="kv" style={{ gridTemplateColumns: '90px 1fr', fontSize: 13.5 }}>
           {where && <><dt>Location</dt><dd>{where}</dd></>}<dt>Sector</dt><dd>{p.industry}</dd><dt>Scope</dt><dd>{p.solution}</dd>
         </dl>
+        <Link to={`/projects/${p.slug}`} className="text-link">View project <Arrow /></Link>
       </div>
     </article>
+  )
+}
+
+/* ============================== PROJECT DETAIL ============================== */
+export function ProjectDetail({ slug }: { slug: string }) {
+  const p = projects.find((x) => x.slug === slug)!
+  const pics = p.photos && p.photos.length ? p.photos : p.photo ? [p.photo] : []
+  const [cur, setCur] = useState(0)
+  const where = [p.city, p.country].filter(Boolean).join(', ')
+  const others = projects.filter((x) => x.slug !== slug && (x.industry === p.industry || x.country === p.country)).slice(0, 3)
+  const more = others.length ? others : projects.filter((x) => x.slug !== slug).slice(0, 3)
+  return (
+    <>
+      <section className="pd-hero">
+        <div className="container">
+          <nav aria-label="Breadcrumb"><ol className="crumbs"><li><Link to="/">Home</Link></li><li><Link to="/projects">Projects</Link></li><li><span aria-current="page">{p.title}</span></li></ol></nav>
+          <span className="eyebrow" style={{ color: 'var(--cyan)' }}>{[p.clientVisible && p.clientName, p.period ?? p.year].filter(Boolean).join(' · ')}</span>
+          <h1 className="h1 pd-hero__title">{p.title}</h1>
+          <p className="lead">{p.summary}</p>
+        </div>
+      </section>
+      <section className="section section--tight">
+        <div className="container pd-grid">
+          <div className="pd-gallery">
+            {pics.length > 0 && <div className="pd-gallery__main media"><img src={pics[cur]} {...responsive(pics[cur], '(max-width: 960px) 100vw, 66vw')} alt={`${p.title} — photo ${cur + 1}`} /></div>}
+            {pics.length > 1 && <div className="pc__thumbs">{pics.map((src, i) => (
+              <button key={src} type="button" className={i === cur ? 'is-on' : ''} onClick={() => setCur(i)} aria-label={`Show photo ${i + 1}`}><img src={src} alt="" loading="lazy" /></button>
+            ))}</div>}
+          </div>
+          <aside className="panel pd-facts">
+            <h2 className="h3">Project facts</h2>
+            <dl className="kv" style={{ gridTemplateColumns: '100px 1fr' }}>
+              {p.clientVisible && p.clientName && <><dt>Client</dt><dd>{p.clientName}</dd></>}
+              {where && <><dt>Location</dt><dd>{where}</dd></>}
+              <dt>Sector</dt><dd>{p.industry}</dd>
+              <dt>Scope</dt><dd>{p.solution}</dd>
+              {(p.period ?? p.year) && <><dt>Year</dt><dd>{p.period ?? p.year}</dd></>}
+              <dt>Status</dt><dd>{p.status}</dd>
+            </dl>
+            <Link to="/contact" className="btn btn--blue">Discuss a similar project <Arrow /></Link>
+            <Link to="/projects" className="text-link">← All projects</Link>
+          </aside>
+        </div>
+      </section>
+      {more.length > 0 && (
+        <section className="section section--soft">
+          <div className="container" style={{ display: 'grid', gap: 28 }}>
+            <SectionHead eyebrow="More projects" title="Related work." />
+            <div className="grid grid-3">{more.map((x) => <ProjectCard key={x.slug} p={x} />)}</div>
+          </div>
+        </section>
+      )}
+      <CTASection />
+    </>
   )
 }
 
@@ -279,6 +335,7 @@ export function Careers() {
               </details>
             ))}</div>
           )}
+          <div style={{ marginTop: 40 }}><JobAlerts /></div>
         </div>
       </section>
       <section className="section" id="apply" aria-labelledby="apply-title">

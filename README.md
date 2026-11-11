@@ -117,3 +117,11 @@ Sessions last 8 hours; after 10 wrong passwords an address is blocked for 15 min
 The Careers form emails each application, with the CV attached, to **careers@asecautomation.com**
 via FormSubmit (formsubmit.co). After the site is live, send one test application: FormSubmit
 emails careers@ an **Activate** link — click it once, and all later applications arrive normally.
+
+## Adding new photos
+After adding large photos to `public/images/`, run `python3 scripts/make_small_images.py`.
+It creates 800px phone copies (`name-800.webp`) and the site serves them to small screens automatically.
+
+## Company profile & certificates
+- Profile: put the approved PDF in `public/docs/` and set `profilePdf` in `src/content/company.ts`.
+- Certificates: put scans in `public/docs/certificates/` and fill `certificateFiles` in the same file.

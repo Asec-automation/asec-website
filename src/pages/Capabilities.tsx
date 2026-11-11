@@ -1,7 +1,7 @@
 import { LuCheck } from 'react-icons/lu'
 import React from 'react'
 import { Link, href } from '../lib/router'
-import { Img, Arrow, SectionHead, StatusBadge, CTASection, PageHero, Icon, EmptyState, Gallery } from '../components/ui'
+import { Img, Arrow, SectionHead, StatusBadge, CTASection, PageHero, Icon, EmptyState, Gallery, responsive } from '../components/ui'
 import { services } from '../content/expertise'
 import { solutions, industries, projects, industryTiles } from '../content/catalogue'
 import { CementDiagram } from '../components/CementDiagram'
@@ -174,7 +174,7 @@ export function Industries() {
   return (
     <>
       <section className="ind-hero">
-        <div className="ind-hero__media" aria-hidden><img src="/images/industries/hero.webp" alt="" /></div>
+        <div className="ind-hero__media" aria-hidden><img src="/images/industries/hero.webp" {...responsive('/images/industries/hero.webp', '100vw')} alt="" /></div>
         <div className="container ind-hero__content">
           <nav aria-label="Breadcrumb"><ol className="crumbs"><li><Link to="/">Home</Link></li><li><span aria-current="page">Industries</span></li></ol></nav>
           <span className="eyebrow" style={{ color: 'var(--cyan)' }}>Industries</span>

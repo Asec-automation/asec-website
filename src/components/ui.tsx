@@ -6,8 +6,20 @@ import {
 } from 'react-icons/lu'
 import { SLOT_MAP, ALT, aspect } from '../config/images'
 import available from '../config/available-images.json'
+import smallImages from '../config/small-images.json'
 import { Link } from '../lib/router'
 import type { Status } from '../content/company'
+
+/* ---------------- responsive images ---------------- */
+declare const __ROUTER_MODE__: 'history' | 'hash'
+const SMALL = smallImages as Record<string, { small: string; w: number }>
+const LIVE = typeof __ROUTER_MODE__ === 'undefined' || __ROUTER_MODE__ === 'history'
+/** srcset/sizes for photos that have an 800px phone copy (live site only; the offline preview inlines images). */
+export function responsive(src?: string, sizes = '(max-width: 760px) 100vw, 50vw') {
+  const s = src && SMALL[src]
+  if (!LIVE || !s) return {}
+  return { srcSet: `${s.small} 800w, ${src} ${s.w}w`, sizes }
+}
 
 /* ---------------- icons ---------------- */
 const ICONS: Record<string, React.ComponentType<{ 'aria-hidden'?: boolean }>> = {
@@ -62,7 +74,7 @@ export function Img({
     <div className={`media ${className}`} style={style} data-slot={id}>
       {src ? (
         <img
-          src={src} alt={ALT[id] ?? slot.alt} width={slot.width} height={slot.height}
+          src={src} {...responsive(src, slot.width >= 1600 ? '100vw' : '(max-width: 760px) 100vw, 50vw')} alt={ALT[id] ?? slot.alt} width={slot.width} height={slot.height}
           loading={priority ? 'eager' : 'lazy'} decoding="async"
           {...(priority ? { fetchPriority: 'high' } : {})}
           style={focal ? { objectPosition: focal } : undefined}
@@ -165,7 +177,7 @@ export function Gallery({ items, dark }: { items: { src: string; alt: string }[]
       {items.map((it) => (
         <li key={it.src} className="reveal">
           <figure>
-            <img src={it.src} alt={it.alt} loading="lazy" decoding="async" />
+            <img src={it.src} {...responsive(it.src, '(max-width: 760px) 100vw, 33vw')} alt={it.alt} loading="lazy" decoding="async" />
             <figcaption>{it.alt}</figcaption>
           </figure>
         </li>

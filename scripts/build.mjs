@@ -78,7 +78,7 @@ const og = available.OG_DEFAULT_01 ? `${siteUrl}${available.OG_DEFAULT_01}` : ''
 const page = ({ html, title, description, image, type, noindex, lang = 'en' }, p) => {
   const enPath = p.startsWith('/ar') ? (p.slice(3) || '/') : p
   const arPath = enPath === '/' ? '/ar' : '/ar' + enPath
-  const ogImg = image && available[image] ? `${siteUrl}${available[image]}` : og
+  const ogImg = image && image.startsWith('/') ? `${siteUrl}${image}` : image && available[image] ? `${siteUrl}${available[image]}` : og
   return `<!doctype html>
 <html lang="${lang}" dir="${lang === 'ar' ? 'rtl' : 'ltr'}" class="no-js">
 <head>
