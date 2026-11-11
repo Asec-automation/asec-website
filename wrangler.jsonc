@@ -11,7 +11,7 @@
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "404-page",
     "run_worker_first": ["/api/*"]
-  }
-  // Careers job storage — added once the KV namespace exists:
-  // "kv_namespaces": [{ "binding": "CAREERS_KV", "id": "<namespace id>" }]
+  },
+  // Careers job storage (Workers KV namespace "asec-careers")
+  "kv_namespaces": [{ "binding": "CAREERS_KV", "id": "8a816a7620ad41a28e67d2b765cd51e6" }]
 }
