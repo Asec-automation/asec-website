@@ -99,7 +99,7 @@ ${ogImg ? `<meta property="og:image" content="${ogImg}" /><meta name="twitter:im
 <link rel="apple-touch-icon" href="/images/brand/apple-touch-icon.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Caveat:wght@500;600&family=Aref+Ruqaa:wght@400&display=swap" rel="stylesheet" />
 ${p === '/' ? `<script type="application/ld+json">${JSON.stringify(orgLd)}</script>` : ''}
 ${p === '/' && gVerify && !SINGLE ? `<meta name="google-site-verification" content="${gVerify}" />` : ''}
 ${cfToken && !SINGLE ? `<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='${JSON.stringify({ token: cfToken })}'></script>` : ''}

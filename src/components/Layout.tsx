@@ -27,6 +27,7 @@ function Logo({ footer }: { footer?: boolean }) {
   return (
     <Link to="/" className={`logo ${footer ? 'logo--footer' : ''}`} aria-label={`${company.name.value} — home`}>
       {src ? <img src={src} alt={company.name.value} width={footer ? 900 : 538} height={footer ? 249 : 120} /> : <span>ASEC AUTOMATION</span>}
+      <span className="logo__tag">A part of Qalaa Holdings</span>
     </Link>
   )
 }
