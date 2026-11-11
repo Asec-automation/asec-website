@@ -1,0 +1,24 @@
+{
+  "name": "asec-automation-site",
+  "private": true,
+  "version": "0.1.0",
+  "description": "ASEC Automation corporate website — static, free-hostable edition (React + TypeScript, prerendered).",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:preview": "node scripts/build.mjs --hash --single",
+    "images": "node scripts/image-manifest.mjs",
+    "serve": "node scripts/serve.mjs"
+  },
+  "dependencies": {
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-icons": "^5.5.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

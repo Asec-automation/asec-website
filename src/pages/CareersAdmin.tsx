@@ -1,0 +1,177 @@
+import React, { useEffect, useRef, useState } from 'react'
+import { LuLock, LuLogOut, LuPlus, LuTrash2, LuEye, LuEyeOff, LuArrowUp, LuArrowDown, LuUpload, LuDownload, LuSave, LuCircleCheck, LuTriangleAlert } from 'react-icons/lu'
+import { Link } from '../lib/router'
+import { API_AVAILABLE, CAREERS_API, csvToJobs, jobsToCsv, slugify, type EditableJob } from '../content/live-jobs'
+
+const TOKEN_KEY = 'asec-careers-token'
+const TYPES = ['Full-time', 'Part-time', 'Contract', 'Internship']
+const blank = (): EditableJob => ({ slug: `job-${Date.now().toString(36)}`, title: '', department: '', location: '', type: 'Full-time', summary: '', responsibilities: [], requirements: [], show: true })
+const getToken = () => { try { return sessionStorage.getItem(TOKEN_KEY) || '' } catch { return '' } }
+const setToken = (t: string) => { try { t ? sessionStorage.setItem(TOKEN_KEY, t) : sessionStorage.removeItem(TOKEN_KEY) } catch {} }
+
+export default function CareersAdmin() {
+  const [token, setTok] = useState('')
+  const [demo, setDemo] = useState(false)
+  useEffect(() => { setTok(getToken()) }, [])
+  const signOut = () => { setToken(''); setTok(''); setDemo(false) }
+  return (
+    <section className="ca">
+      <div className="container">
+        {token || demo ? <Editor token={token} demo={demo} onSignOut={signOut} /> : <Login onToken={(t) => { setToken(t); setTok(t) }} onDemo={() => setDemo(true)} />}
+      </div>
+    </section>
+  )
+}
+
+function Login({ onToken, onDemo }: { onToken: (t: string) => void; onDemo: () => void }) {
+  const [pw, setPw] = useState(''); const [show, setShow] = useState(false)
+  const [err, setErr] = useState(''); const [busy, setBusy] = useState(false)
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault(); setErr('')
+    if (!pw) { setErr('Enter the careers password.'); return }
+    if (!API_AVAILABLE) { setErr('Sign-in works once the website is online. Use the demo below to see how it looks.'); return }
+    setBusy(true)
+    try {
+      const r = await fetch(`${CAREERS_API}?action=login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pw }) })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok) throw new Error(d.error || 'Sign-in failed. Please try again.')
+      onToken(d.token)
+    } catch (x) { setErr((x as Error).message === 'Failed to fetch' ? 'Couldn’t reach the server. Check your connection and try again.' : (x as Error).message) }
+    finally { setBusy(false) }
+  }
+  return (
+    <div className="ca-login">
+      <span className="ca-login__icon"><LuLock aria-hidden /></span>
+      <h1>Careers admin</h1>
+      <p>Sign in to add, edit or hide job openings on the Careers page.</p>
+      <form onSubmit={submit} noValidate>
+        <label htmlFor="ca-pw">Password</label>
+        <div className="ca-pw">
+          <input id="ca-pw" type={show ? 'text' : 'password'} autoComplete="current-password" value={pw} onChange={(e) => { setPw(e.target.value); setErr('') }} aria-invalid={!!err || undefined} aria-describedby={err ? 'ca-err' : undefined} />
+          <button type="button" onClick={() => setShow(!show)} aria-label={show ? 'Hide password' : 'Show password'}>{show ? <LuEyeOff /> : <LuEye />}</button>
+        </div>
+        {err && <p className="ca-err" id="ca-err" role="alert">{err}</p>}
+        <button className="btn btn--primary" type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
+      </form>
+      {!API_AVAILABLE && <button type="button" className="ca-demo" onClick={onDemo}>Open the demo (preview only — nothing is saved)</button>}
+      <Link to="/careers" className="ca-back">← Back to Careers</Link>
+    </div>
+  )
+}
+
+function Editor({ token, demo, onSignOut }: { token: string; demo: boolean; onSignOut: () => void }) {
+  const [jobs, setJobs] = useState<EditableJob[]>([])
+  const [loading, setLoading] = useState(!demo)
+  const [dirty, setDirty] = useState(false)
+  const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [open, setOpen] = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (demo) { setJobs([{ ...blank(), slug: 'demo-1', title: 'Senior PLC Engineer', department: 'Automation', location: 'Cairo, Egypt', summary: 'Lead PLC and SCADA projects for cement plants.', responsibilities: ['Design PLC logic', 'Commission control systems'], requirements: ['5+ years PLC experience', 'Siemens TIA Portal'] }]); return }
+    fetch(`${CAREERS_API}?all=1`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
+      .then(async (r) => { const d = await r.json().catch(() => ({})); if (r.status === 401) { onSignOut(); return } if (!r.ok) throw new Error(d.error); setJobs(d.jobs || []) })
+      .catch((x) => setMsg({ kind: 'err', text: (x as Error).message || 'Couldn’t load the job list.' }))
+      .finally(() => setLoading(false))
+  }, [token, demo])
+
+  useEffect(() => {
+    const warn = (e: BeforeUnloadEvent) => { if (dirty) { e.preventDefault(); e.returnValue = '' } }
+    window.addEventListener('beforeunload', warn); return () => window.removeEventListener('beforeunload', warn)
+  }, [dirty])
+
+  const update = (list: EditableJob[]) => { setJobs(list); setDirty(true); setMsg(null) }
+  const patch = (i: number, p: Partial<EditableJob>) => update(jobs.map((j, k) => (k === i ? { ...j, ...p } : j)))
+  const move = (i: number, d: number) => { const n = [...jobs]; const t = n[i]; n[i] = n[i + d]; n[i + d] = t; update(n) }
+  const add = () => { const j = blank(); update([j, ...jobs]); setOpen(j.slug) }
+  const remove = (i: number) => { if (window.confirm(`Delete “${jobs[i].title || 'this job'}”? This can’t be undone after you save.`)) update(jobs.filter((_, k) => k !== i)) }
+
+  const save = async () => {
+    const missing = jobs.findIndex((j) => !j.title.trim())
+    if (missing >= 0) { setOpen(jobs[missing].slug); setMsg({ kind: 'err', text: 'Every job needs a title before saving.' }); return }
+    const list = jobs.map((j) => ({ ...j, slug: j.slug.startsWith('job-') && j.title ? `${slugify(j.title)}-${j.slug.slice(4)}` : j.slug }))
+    if (demo) { setJobs(list); setDirty(false); setMsg({ kind: 'ok', text: 'Demo only — on the live site this publishes the changes to the Careers page.' }); return }
+    setSaving(true)
+    try {
+      const r = await fetch(CAREERS_API, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ jobs: list }) })
+      const d = await r.json().catch(() => ({}))
+      if (r.status === 401) { setMsg({ kind: 'err', text: 'Your session expired. Copy any unsaved text, then sign in again.' }); return }
+      if (!r.ok) throw new Error(d.error || 'Saving failed.')
+      setJobs(d.jobs); setDirty(false); setMsg({ kind: 'ok', text: 'Saved. The Careers page is updated.' })
+    } catch (x) { setMsg({ kind: 'err', text: (x as Error).message }) } finally { setSaving(false) }
+  }
+
+  const importCsv = async (f: File) => {
+    if (!/\.csv$/i.test(f.name)) { setMsg({ kind: 'err', text: 'Please choose a CSV file. In Excel use File → Save As → CSV UTF-8.' }); return }
+    const rows = csvToJobs(await f.text())
+    if (!rows.length) { setMsg({ kind: 'err', text: 'No jobs found. The first row must contain the column titles (Title, Department, …).' }); return }
+    const replace = jobs.length === 0 || window.confirm(`Found ${rows.length} job(s). Press OK to REPLACE the current list, or Cancel to ADD them to it.`)
+    update(replace ? rows : [...rows, ...jobs]); setMsg({ kind: 'ok', text: `${rows.length} job(s) imported. Review them, then press Save to publish.` })
+  }
+  const exportCsv = () => {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([jobsToCsv(jobs)], { type: 'text/csv;charset=utf-8' }))
+    a.download = 'ASEC-careers-jobs.csv'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000)
+  }
+
+  const visible = jobs.filter((j) => j.show !== false).length
+  return (
+    <div className="ca-ed">
+      <header className="ca-ed__head">
+        <div>
+          <h1>Careers admin{demo && <span className="ca-tag">Demo</span>}</h1>
+          <p>{jobs.length} job{jobs.length === 1 ? '' : 's'} · {visible} shown on the Careers page{dirty && <strong> · unsaved changes</strong>}</p>
+        </div>
+        <div className="ca-ed__actions">
+          <button type="button" className="ca-btn" onClick={() => fileRef.current?.click()}><LuUpload aria-hidden /> Import Excel (CSV)</button>
+          <input ref={fileRef} type="file" accept=".csv,text/csv" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) importCsv(f); e.target.value = '' }} />
+          <button type="button" className="ca-btn" onClick={exportCsv} disabled={!jobs.length}><LuDownload aria-hidden /> Download Excel (CSV)</button>
+          <button type="button" className="ca-btn" onClick={onSignOut}><LuLogOut aria-hidden /> Sign out</button>
+        </div>
+      </header>
+
+      <div className="ca-bar">
+        <button type="button" className="btn btn--outline" onClick={add}><LuPlus aria-hidden /> Add a job</button>
+        <button type="button" className="btn btn--primary" onClick={save} disabled={saving || !dirty}><LuSave aria-hidden /> {saving ? 'Saving…' : 'Save and publish'}</button>
+      </div>
+      <div aria-live="polite">{msg && <p className={`ca-msg ca-msg--${msg.kind}`}>{msg.kind === 'ok' ? <LuCircleCheck aria-hidden /> : <LuTriangleAlert aria-hidden />}{msg.text}</p>}</div>
+
+      {loading ? <p className="muted">Loading jobs…</p> : jobs.length === 0 ? (
+        <div className="ca-empty"><h2>No jobs yet</h2><p>Press “Add a job”, or import your Excel list saved as CSV.</p></div>
+      ) : (
+        <ol className="ca-list">
+          {jobs.map((j, i) => {
+            const isOpen = open === j.slug
+            return (
+              <li key={j.slug} className={`ca-job ${j.show === false ? 'is-hidden' : ''}`}>
+                <div className="ca-job__row">
+                  <button type="button" className="ca-job__title" onClick={() => setOpen(isOpen ? null : j.slug)} aria-expanded={isOpen}>
+                    <strong>{j.title || 'Untitled job'}</strong>
+                    <span>{[j.department, j.location, j.type].filter(Boolean).join(' · ') || 'Click to edit'}</span>
+                  </button>
+                  <label className="ca-switch"><input type="checkbox" checked={j.show !== false} onChange={(e) => patch(i, { show: e.target.checked })} /><span>{j.show !== false ? 'Shown' : 'Hidden'}</span></label>
+                  <div className="ca-job__tools">
+                    <button type="button" onClick={() => move(i, -1)} disabled={i === 0} aria-label="Move up"><LuArrowUp /></button>
+                    <button type="button" onClick={() => move(i, 1)} disabled={i === jobs.length - 1} aria-label="Move down"><LuArrowDown /></button>
+                    <button type="button" onClick={() => remove(i)} aria-label="Delete job" className="is-danger"><LuTrash2 /></button>
+                  </div>
+                </div>
+                {isOpen && (
+                  <div className="ca-job__form">
+                    <label className="ca-f ca-f--wide">Job title *<input value={j.title} maxLength={120} onChange={(e) => patch(i, { title: e.target.value })} /></label>
+                    <label className="ca-f">Department<input value={j.department} maxLength={80} onChange={(e) => patch(i, { department: e.target.value })} /></label>
+                    <label className="ca-f">Location<input value={j.location} maxLength={80} placeholder="Cairo, Egypt" onChange={(e) => patch(i, { location: e.target.value })} /></label>
+                    <label className="ca-f">Type<select value={j.type} onChange={(e) => patch(i, { type: e.target.value })}>{TYPES.map((t) => <option key={t}>{t}</option>)}</select></label>
+                    <label className="ca-f ca-f--wide">Short description<textarea rows={3} value={j.summary} maxLength={1200} onChange={(e) => patch(i, { summary: e.target.value })} /></label>
+                    <label className="ca-f">Responsibilities <em>one per line</em><textarea rows={5} value={j.responsibilities.join('\n')} onChange={(e) => patch(i, { responsibilities: e.target.value.split('\n') })} onBlur={(e) => patch(i, { responsibilities: e.target.value.split('\n').map((x) => x.trim()).filter(Boolean) })} /></label>
+                    <label className="ca-f">Requirements <em>one per line</em><textarea rows={5} value={j.requirements.join('\n')} onChange={(e) => patch(i, { requirements: e.target.value.split('\n') })} onBlur={(e) => patch(i, { requirements: e.target.value.split('\n').map((x) => x.trim()).filter(Boolean) })} /></label>
+                  </div>
+                )}
+              </li>
+            )
+          })}
+        </ol>
+      )}
+    </div>
+  )
+}

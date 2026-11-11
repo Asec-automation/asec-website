@@ -1,0 +1,373 @@
+import React, { useMemo, useState } from 'react'
+import { Link } from '../lib/router'
+import { Img, Arrow, SectionHead, StatusBadge, CTASection, PageHero, EmptyState, Gallery, Icon } from '../components/ui'
+import { projects, countries, industries, projectPhotos, clientGroups, type Relationship } from '../content/catalogue'
+import { company, REVIEW_MODE } from '../content/company'
+import { useJobs } from '../content/live-jobs'
+import { WorldMap, markerGroup } from '../components/WorldMap'
+import { ContactForm } from '../components/ContactForm'
+import { ApplicationForm } from '../components/ApplicationForm'
+
+/* ============================== PROJECTS ============================== */
+export function Projects() {
+  const [q, setQ] = useState(''); const [country, setCountry] = useState(''); const [industry, setIndustry] = useState(''); const [year, setYear] = useState('')
+  const opts = (k: 'country' | 'industry') => Array.from(new Set(projects.map((p) => p[k]))).sort()
+  const years = Array.from(new Set(projects.map((p) => p.year).filter(Boolean))).sort().reverse()
+  const list = useMemo(() => projects.filter((p) =>
+    (!q || `${p.title} ${p.summary} ${p.technologies.join(' ')}`.toLowerCase().includes(q.toLowerCase())) &&
+    (!country || p.country === country) && (!industry || p.industry === industry) && (!year || String(p.year) === year)), [q, country, industry, year])
+  return (
+    <>
+      <PageHero image="PROJECTS_HERO_01" eyebrow="Projects" crumbs={[{ label: 'Projects' }]}
+        title={<>400+ projects <span className="accent">delivered.</span></>} lead="A selection from ASEC’s project portfolio — cement, infrastructure, oil & gas, facility management, solar, water, rail and more." />
+      <section className="section">
+        <div className="container">
+          {projects.length > 0 && (
+          <div className="toolbar" role="search">
+            <label className="sr-only" htmlFor="pq">Search projects</label>
+            <input id="pq" placeholder="Search projects or technologies…" value={q} onChange={(e) => setQ(e.target.value)} />
+            <label className="sr-only" htmlFor="pc">Country</label>
+            <select id="pc" value={country} onChange={(e) => setCountry(e.target.value)}><option value="">All countries</option>{opts('country').map((o) => <option key={o}>{o}</option>)}</select>
+            <label className="sr-only" htmlFor="pi">Industry</label>
+            <select id="pi" value={industry} onChange={(e) => setIndustry(e.target.value)}><option value="">All industries</option>{opts('industry').map((o) => <option key={o}>{o}</option>)}</select>
+            <label className="sr-only" htmlFor="py">Year</label>
+            <select id="py" value={year} onChange={(e) => setYear(e.target.value)}><option value="">All years</option>{years.map((o) => <option key={o}>{o}</option>)}</select>
+          </div>
+          )}
+          {projects.length === 0 ? (
+            <EmptyState icon="folder" title="Project references coming soon" text="Our latest project references will be published here shortly." />
+          ) : list.length === 0 ? <p className="muted">No projects match these filters.</p> : (
+            <div className="grid grid-3">{list.map((p) => (
+              <article key={p.slug} id={p.slug} className="x-card reveal" style={{ padding: 0, scrollMarginTop: 100 }}>
+                {p.photo
+                  ? <div className="media" style={{ aspectRatio: '4/3', borderRadius: 0, position: 'relative' }}><img src={p.photo} alt="" loading="lazy" style={{ objectPosition: p.photoFocus }} />{p.illustrative && <span className="illus-tag">Illustration</span>}</div>
+                  : <div className="proj-band"><span>{p.industry}</span><b>{p.country}</b></div>}
+                <div style={{ padding: 26, display: 'grid', gap: 10 }}>
+                  <span className="eyebrow">{p.country}{p.city ? ` · ${p.city}` : ''} · {p.industry}</span>
+                  <h2 className="h3">{p.title}</h2>
+                  <p>{p.summary}</p>
+                  <dl className="kv" style={{ gridTemplateColumns: '110px 1fr', fontSize: 13.5 }}>
+                    {p.clientVisible && p.clientName && <><dt>Client</dt><dd>{p.clientName}</dd></>}<dt>Scope</dt><dd>{p.solution}</dd>{p.year && <><dt>Year</dt><dd>{p.year}</dd></>}
+                  </dl>
+                </div>
+              </article>
+            ))}</div>
+          )}
+          <div style={{ marginTop: 'clamp(70px, 9vw, 110px)' }} id="clients">
+            <SectionHead eyebrow="Our clients" title="Clients across eight sectors." lead="A selection of the clients ASEC Automation has worked with across cement, energy, industry, infrastructure and the public sector." />
+            <div className="client-groups">
+              {clientGroups.map((g) => (
+                <div key={g.sector} className="client-group reveal">
+                  <h3><span className="client-group__icon"><Icon name={g.icon} /></span>{g.sector}</h3>
+                  <ul>{g.names.map((n) => <li key={n}>{n}</li>)}</ul>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={{ marginTop: 80 }}>
+            <SectionHead eyebrow="Project photos" title="Worldwide projects." lead="Photos from ASEC project sites." />
+            <Gallery items={projectPhotos} />
+          </div>
+        </div>
+      </section>
+      <CTASection />
+    </>
+  )
+}
+
+/* ============================== GLOBAL PRESENCE ============================== */
+const REGIONS: { id: string; name: string; short: string; text: string; countries: string[] }[] = [
+  { id: 'mena', name: 'Middle East & North Africa', short: 'MENA',
+    text: 'Our home region. Head office and workshops in Egypt, branches in Saudi Arabia, Libya and the UAE, mega infrastructure in Riyadh, and cement projects in Jordan, Morocco and Algeria.',
+    countries: ['egypt', 'saudi-arabia', 'libya', 'uae', 'jordan', 'morocco', 'algeria', 'iraq'] },
+  { id: 'africa', name: 'Sub-Saharan Africa', short: 'Africa',
+    text: 'Control-system upgrades for cement plants, including LafargeHolcim’s Hima Plant Line 3 in Uganda, with a footprint across Kenya and Tanzania.',
+    countries: ['uganda', 'kenya', 'tanzania'] },
+  { id: 'apac', name: 'Asia Pacific', short: 'APAC',
+    text: 'Cement projects in the Philippines, including the APO cement mill for CEMEX.',
+    countries: ['philippines'] },
+  { id: 'americas', name: 'The Americas', short: 'Americas',
+    text: 'Cement projects for Lafarge in Honduras — Piedras Azules and a PPC upgrade — and projects delivered in Mexico.',
+    countries: ['honduras', 'mexico'] },
+]
+
+export function GlobalPresence() {
+  const visible = countries.filter((c) => c.published || REVIEW_MODE)
+  const byId = Object.fromEntries(visible.map((c) => [c.id, c]))
+  const projOf = (name: string) => projects.filter((p) => p.country === name)
+  const [active, setActive] = useState('egypt')
+  const sel = byId[active] ?? visible[0]
+  const selProj = sel ? projOf(sel.name).slice(0, 3) : []
+  return (
+    <>
+      <section className="gp3-hero">
+        <div className="container">
+          <nav aria-label="Breadcrumb"><ol className="crumbs"><li><Link to="/">Home</Link></li><li><span aria-current="page">Global Presence</span></li></ol></nav>
+          <div className="gp3-hero__head">
+            <div>
+              <span className="eyebrow" style={{ color: 'var(--cyan)' }}>Global presence</span>
+              <h1 className="h1">An international <span className="accent">industrial perspective.</span></h1>
+            </div>
+            <p className="lead">Across continents, one engineering standard — with offices in Egypt, Saudi Arabia, Libya and the UAE, and projects across four regions.</p>
+          </div>
+          <dl className="gp3-stats">
+            <div><dd>17</dd><dt>Countries footprint</dt></div>
+            <div><dd>4</dd><dt>Offices worldwide</dt></div>
+            <div><dd>4</dd><dt>Regions</dt></div>
+            <div><dd>400<span>+</span></dd><dt>Projects delivered</dt></div>
+          </dl>
+          <div className="gp3-map">
+            <div className="gp3-map__canvas"><WorldMap countries={visible} active={active} onSelect={setActive} /></div>
+            {sel && (
+              <aside className="gp3-map__card" aria-live="polite">
+                <span className={`gp3-tag gp3-tag--${markerGroup(sel).toLowerCase()}`}><i className={`gp-dot gp-dot--${markerGroup(sel).toLowerCase()}`} aria-hidden />{sel.label ?? sel.relationship}</span>
+                <h2>{sel.name}</h2>
+                <p>{sel.description}</p>
+                {selProj.length > 0 && <ul>{selProj.map((p) => <li key={p.slug}><Link to={`/projects#${p.slug}`}>{p.title}<Arrow /></Link></li>)}</ul>}
+                <div className="gp3-map__chips" role="group" aria-label="Choose a country">
+                  {visible.map((c) => <button key={c.id} aria-pressed={c.id === active} onClick={() => setActive(c.id)}>{c.name}</button>)}
+                </div>
+              </aside>
+            )}
+          </div>
+          <p className="gp2-legend gp3-legend"><span><i className="gp-dot gp-dot--branches" />Branch / office</span><span><i className="gp-dot gp-dot--projects" />Projects</span><span><i className="gp-dot gp-dot--footprint" />Footprint</span></p>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="container">
+          <SectionHead eyebrow="Where we work" title="Four regions. One engineering team." />
+          <div className="gp3-regions">
+            {REGIONS.map((r, i) => {
+              const list = r.countries.map((id) => byId[id]).filter(Boolean)
+              const proj = list.flatMap((c) => projOf(c.name))
+              const highlight = [...proj.filter((p) => p.featured), ...proj.filter((p) => !p.featured)].slice(0, 3)
+              return (
+                <article key={r.id} className="gp3-region reveal" style={{ transitionDelay: `${i * 70}ms` }}>
+                  <header>
+                    <span className="gp3-region__n">{String(i + 1).padStart(2, '0')}</span>
+                    <span className="gp3-region__count"><strong>{list.length}</strong> {list.length === 1 ? 'country' : 'countries'}</span>
+                  </header>
+                  <span className="gp3-region__short" aria-hidden>{r.short}</span>
+                  <h3>{r.name}</h3>
+                  <p>{r.text}</p>
+                  <ul className="gp3-region__countries">
+                    {list.map((c) => <li key={c.id}><button onClick={() => { setActive(c.id); document.querySelector('.gp3-map')?.scrollIntoView({ behavior: 'smooth', block: 'center' }) }}><i className={`gp-dot gp-dot--${markerGroup(c).toLowerCase()}`} aria-hidden />{c.name}</button></li>)}
+                  </ul>
+                  {highlight.length > 0 && (
+                    <div className="gp3-region__proj">
+                      <span>Selected projects</span>
+                      <ul>{highlight.map((p) => <li key={p.slug}><Link to={`/projects#${p.slug}`}><strong>{p.title}</strong><em>{[p.clientName, p.country].filter(Boolean).join(' · ')}</em></Link></li>)}</ul>
+                    </div>
+                  )}
+                </article>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section className="section section--dark">
+        <div className="container">
+          <SectionHead eyebrow="Our branches" title="Four offices. One team." aside={<Link to="/contact" className="btn btn--primary">Contact us <Arrow /></Link>} />
+          <div className="gp3-branches">
+            {company.offices.map((o, i) => (
+              <div key={o.country} className="gp3-branch reveal" style={{ transitionDelay: `${i * 70}ms` }}>
+                <span className="gp3-branch__n">{String(i + 1).padStart(2, '0')}</span>
+                <span className="gp3-branch__label">{o.label}</span>
+                <h3>{o.country}</h3>
+                <p>{o.address}</p>
+                {'mapUrl' in o && o.mapUrl && <a href={o.mapUrl as string} target="_blank" rel="noopener noreferrer" className="gp3-branch__link">Open in Maps <Arrow /></a>}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </>
+  )
+}
+
+/* ============================== CAREERS ============================== */
+export function Careers() {
+  const [q, setQ] = useState('')
+  const { jobs, loading } = useJobs()
+  const list = jobs.filter((j) => !q || `${j.title} ${j.location} ${j.department}`.toLowerCase().includes(q.toLowerCase()))
+  return (
+    <>
+      <PageHero image="CAREERS_HERO_01" eyebrow="Careers" crumbs={[{ label: 'Careers' }]}
+        title={<>Build the future of <span className="accent">industrial automation.</span></>} lead="Join engineers and specialists who work where technology meets heavy industry." />
+      <section className="section">
+        <div className="container split">
+          <div className="reveal" style={{ display: 'grid', gap: 20 }}>
+            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}><span className="eyebrow">Culture</span><StatusBadge status="proposed" /></div>
+            <h2 className="h2">Learn on real plants. Grow with real responsibility.</h2>
+            <p className="lead">We value curiosity, technical rigour and teamwork — and we put safety first, on every site.</p>
+            <ul className="perks">
+              <li><span className="perks__icon"><Icon name="factory" /></span><div><strong>Real projects</strong><p>400+ projects in cement, energy, infrastructure, oil & gas and more — across 17 countries.</p></div></li>
+              <li><span className="perks__icon"><Icon name="users" /></span><div><strong>Safety & training</strong><p>HSE team training and HSE awareness training for all employees.</p></div></li>
+              <li><span className="perks__icon"><Icon name="globe" /></span><div><strong>Where we work</strong><p>Head office in Cairo, workshops in Tebbin and the Alexandria free zone, branches in Saudi Arabia, Libya and the UAE.</p></div></li>
+            </ul>
+            <p className="review-only muted" style={{ fontSize: 14 }}>Benefits and development programmes: to be provided by HR.</p>
+          </div>
+          <Img id="CAREERS_CULTURE_01" style={{ aspectRatio: '4/3' }} />
+        </div>
+      </section>
+      <section className="section section--soft" id="openings">
+        <div className="container">
+          <SectionHead eyebrow="Open positions" title="Current openings." />
+          {jobs.length > 3 && <div className="toolbar" role="search"><label className="sr-only" htmlFor="jq">Search jobs</label><input id="jq" placeholder="Search by title, location or department…" value={q} onChange={(e) => setQ(e.target.value)} /></div>}
+          {loading ? <p className="muted">Loading current openings…</p> : jobs.length === 0 ? (
+            <EmptyState icon="briefcase" title="No open positions right now"
+              text="Approved vacancies will be listed here with full job details. You can still send us your CV below as an open application." />
+          ) : (
+            <div style={{ display: 'grid', gap: 14 }}>{list.map((j) => (
+              <details key={j.slug} className="panel" style={{ padding: 26 }}>
+                <summary style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}><strong className="h3">{j.title}</strong><span className="muted">{j.department} · {j.location} · {j.type}</span></summary>
+                <div style={{ display: 'grid', gap: 16, marginTop: 18 }}>
+                  <p>{j.summary}</p>
+                  <div className="grid grid-2"><div><h4>Responsibilities</h4><ul className="ticks">{j.responsibilities.map((r) => <li key={r}>{r}</li>)}</ul></div><div><h4>Requirements</h4><ul className="ticks">{j.requirements.map((r) => <li key={r}>{r}</li>)}</ul></div></div>
+                  <div><button type="button" className="btn btn--blue" onClick={() => { window.dispatchEvent(new CustomEvent('apply-position', { detail: j.title })); document.getElementById('apply')?.scrollIntoView({ behavior: 'smooth' }) }}>Apply for this role <Arrow /></button></div>
+                </div>
+              </details>
+            ))}</div>
+          )}
+        </div>
+      </section>
+      <section className="section" id="apply" aria-labelledby="apply-title">
+        <div className="container split" style={{ alignItems: 'start' }}>
+          <div className="reveal" style={{ display: 'grid', gap: 18 }}>
+            <span className="eyebrow">Apply</span>
+            <h2 id="apply-title" className="h2">Send us your CV.</h2>
+            <p className="lead">Apply for an open position, or send an open application. Attach your CV or résumé as a PDF or Word file.</p>
+            <p className="muted" style={{ fontSize: 14 }}>Your CV is sent privately to our HR team and is not published on this website.</p>
+            <p style={{ fontSize: 15, margin: 0 }}>Prefer email? Send your CV to <a href={`mailto:${company.contact.hrEmail}`} style={{ fontWeight: 600, color: 'var(--blue)' }}>{company.contact.hrEmail}</a></p>
+          </div>
+          <div className="panel"><ApplicationForm /></div>
+        </div>
+      </section>
+      <CTASection title="Interested in joining us?" text="Questions about careers at ASEC? Get in touch with our team." />
+    </>
+  )
+}
+
+/* ============================== NEWS & INSIGHTS HUB ============================== */
+
+/* ============================== CONTACT ============================== */
+export function Contact() {
+  const [tab, setTab] = useState<'general' | 'business'>('general')
+  const c = company.contact
+  return (
+    <>
+      <PageHero image="CONTACT_HERO_01" eyebrow="Contact" crumbs={[{ label: 'Contact' }]}
+        title={<>Let’s engineer <span className="accent">what’s next.</span></>} lead="Tell us about your plant, project or question. Our team will route it to the right specialist." />
+      <section className="section section--soft">
+        <div className="container" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.5fr) minmax(0,1fr)', gap: 40 }} data-contact-grid>
+          <div className="panel">
+            <div className="tabs" role="tablist" aria-label="Inquiry type" style={{ marginBottom: 28 }}>
+              <button role="tab" aria-selected={tab === 'general'} onClick={() => setTab('general')}>General inquiry</button>
+              <button role="tab" aria-selected={tab === 'business'} onClick={() => setTab('business')}>Business inquiry</button>
+            </div>
+            <div role="tabpanel"><ContactForm key={tab} variant={tab} /></div>
+          </div>
+          <aside style={{ display: 'grid', gap: 22, alignContent: 'start' }}>
+            <div className="panel" style={{ display: 'grid', gap: 14 }}>
+              <h2 className="h3">Contact details</h2>
+              {c.email || c.phone || c.address ? (
+                <dl className="kv" style={{ gridTemplateColumns: '90px 1fr' }}>
+                  {c.email && <><dt>Email</dt><dd><a href={`mailto:${c.email}`}>{c.email}</a></dd></>}
+                  {c.hrEmail && <><dt>Careers</dt><dd><a href={`mailto:${c.hrEmail}`}>{c.hrEmail}</a></dd></>}
+                  {c.phone && <><dt>Phone</dt><dd><a href={`tel:${c.phoneHref}`}>{c.phone}</a></dd></>}
+                  {c.website && <><dt>Web</dt><dd>{c.website}</dd></>}
+                </dl>
+              ) : <p className="muted">Office addresses, telephone numbers and email addresses will be published here once provided. <StatusBadge status="missing" /></p>}
+            </div>
+            <div className="panel" style={{ display: 'grid', gap: 14 }}>
+              <h2 className="h3">Branches</h2>
+              <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 14 }}>
+                {company.offices.map((o) => (
+                  <li key={o.country}>
+                    <strong>{o.country}</strong> <span className="muted">— {o.label}</span><br />
+                    <span style={{ fontSize: 14.5 }}>{o.address}</span><br />
+                    <a className="text-link" href={'mapUrl' in o && o.mapUrl ? o.mapUrl : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(o.address)}`} target="_blank" rel="noopener noreferrer">Open in Google Maps <Arrow /></a>
+                  </li>
+                ))}
+              </ul>
+              <Link to="/global-presence" className="text-link">View global presence <Arrow /></Link>
+            </div>
+          </aside>
+        </div>
+      </section>
+      <section className="section section--tight" aria-labelledby="hq-title">
+        <div className="container" style={{ display: 'grid', gap: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: 20, flexWrap: 'wrap' }}>
+            <div style={{ display: 'grid', gap: 10 }}>
+              <span className="eyebrow">Head office — Cairo</span>
+              <h2 id="hq-title" className="h2">Visit us in Maadi, Cairo.</h2>
+              <p className="lead">{company.offices[0].address}</p>
+              <p className="muted"><a href={`tel:${c.phoneHref}`}>{c.phone}</a> · <a href={`mailto:${c.email}`}>{c.email}</a></p>
+            </div>
+            <a className="btn btn--blue" href={company.offices[0].mapUrl} target="_blank" rel="noopener noreferrer">Open in Google Maps <Arrow /></a>
+          </div>
+          <div className="media" style={{ aspectRatio: '21 / 9', minHeight: 320, background: '#e6e9f2' }}>
+            <iframe
+              title="Map of ASEC Automation head office, Maadi, Cairo"
+              src={`https://www.google.com/maps?q=${encodeURIComponent('ASEC Automation (ASA), 9 Street 286, El Basatin, Cairo 4234220, Egypt')}&output=embed`}
+              style={{ border: 0, width: '100%', height: '100%' }}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+        </div>
+      </section>
+    </>
+  )
+}
+
+/* ============================== LEGAL ============================== */
+function Legal({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <>
+      <section className="section section--dark" style={{ paddingTop: 170, paddingBottom: 70 }}>
+        <div className="container" style={{ display: 'grid', gap: 18 }}><span className="eyebrow">Legal</span><h1 className="h1">{title}</h1><div><StatusBadge status="proposed" label="Template — requires legal review" /></div></div>
+      </section>
+      <section className="section"><div className="container"><div className="prose">{children}</div></div></section>
+    </>
+  )
+}
+export const Privacy = () => (
+  <Legal title="Privacy Policy">
+    <p>This template must be reviewed by ASEC’s legal advisers and adapted to the jurisdictions in which ASEC operates before publication.</p>
+    <h2>Information we collect</h2>
+    <p>When you use our contact form we collect the details you provide — such as your name, company, email address, phone number, country and message — to respond to your inquiry.</p>
+    <h2>How we use it</h2>
+    <ul><li>To respond to your inquiry and follow up on business opportunities you request.</li><li>To keep a record of correspondence.</li><li>We do not sell personal information.</li></ul>
+    <h2>Third-party processors</h2>
+    <p>Form submissions may be delivered through a third-party form service. Fonts may be loaded from Google Fonts. [List the processors actually used before publishing.]</p>
+    <h2>Retention</h2>
+    <p>[Retention period to be defined by ASEC.]</p>
+    <h2>Your rights</h2>
+    <p>You may request access to, correction or deletion of your personal data by contacting [contact address to be provided].</p>
+  </Legal>
+)
+export const Terms = () => (
+  <Legal title="Terms of Use">
+    <p>This template must be reviewed by ASEC’s legal advisers before publication.</p>
+    <h2>Use of this website</h2>
+    <p>The content of this website is provided for general information about {company.name.value} and its capabilities. It does not constitute an offer or engineering advice for any specific installation.</p>
+    <h2>Intellectual property</h2>
+    <p>Unless otherwise stated, content on this site is owned by {company.name.value}. Third-party trademarks belong to their respective owners and their display does not imply endorsement.</p>
+    <h2>Illustrative content</h2>
+    <p>Any dashboard or chart labelled “Illustrative Demo” uses synthetic data and does not represent any real plant.</p>
+    <h2>Liability</h2>
+    <p>[Liability and governing-law clauses to be provided by legal counsel.]</p>
+  </Legal>
+)
+export function Cookies() {
+  return (
+    <Legal title="Cookie Preferences">
+      <p>This website does not set advertising or analytics cookies, and sets no cookies of its own.</p>
+      <p>The Contact page shows an embedded Google Map of our Cairo head office. Google may set its own cookies when that map loads.</p>
+      <p>If analytics are added later, this page should be updated and a consent mechanism enabled before any non-essential cookies are set.</p>
+    </Legal>
+  )
+}
