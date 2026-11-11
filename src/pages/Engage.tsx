@@ -33,7 +33,11 @@ function HqMap() {
         loading="lazy"
         allowFullScreen
         referrerPolicy="no-referrer-when-downgrade"
+        tabIndex={-1}
       />
+      <a className="hq-map__link" href={company.offices[0].mapUrl} target="_blank" rel="noopener noreferrer" aria-label="Open ASEC Automation head office in Google Maps">
+        <span className="hq-map__badge">Open in Google Maps <Arrow /></span>
+      </a>
     </div>
   )
 }

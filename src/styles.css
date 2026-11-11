@@ -1769,3 +1769,7 @@ html[lang="ar"] p, html[lang="ar"] li { line-height: 1.85; }
 .hq-map-card__go { display: inline-flex; gap: 8px; align-items: center; margin-top: 6px; font-weight: 700; color: #fff !important; }
 .hq-map-card:hover .hq-map-card__go { text-decoration: underline; }
 @media (max-width: 640px) { .hq-map-card { aspect-ratio: auto; } }
+.hq-map { position: relative; }
+.hq-map__link { position: absolute; inset: 0; z-index: 2; display: flex; align-items: flex-end; justify-content: flex-end; padding: 18px; cursor: pointer; }
+.hq-map__badge { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; background: #040f47; color: #fff; font-weight: 700; font-size: 14px; box-shadow: 0 8px 24px rgba(4,15,71,.3); transition: transform .2s, background .2s; }
+.hq-map__link:hover .hq-map__badge, .hq-map__link:focus-visible .hq-map__badge { background: #1C75BC; transform: translateY(-2px); }
