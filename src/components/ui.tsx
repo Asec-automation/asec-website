@@ -2,7 +2,7 @@ import React from 'react'
 import {
   LuArrowRight, LuCpu, LuGauge, LuMonitor, LuZap, LuLayers, LuActivity, LuFactory, LuSun, LuRecycle,
   LuRefreshCw, LuFolderOpen, LuNewspaper, LuBriefcase, LuHandshake, LuUsers, LuGlobe, LuMail,
-  LuFlame, LuFlaskConical, LuDroplets, LuTrainFront, LuBuilding2, LuServer, LuMountain, LuLayoutGrid, LuSettings, LuCircuitBoard, LuBox, LuBoxes, LuSquareStack, LuConstruction, LuRuler,
+  LuFlame, LuFlaskConical, LuDroplets, LuTrainFront, LuBuilding2, LuServer, LuMountain, LuLayoutGrid, LuSettings, LuCircuitBoard, LuBox, LuBoxes, LuSquareStack, LuConstruction, LuRuler, LuMapPin,
 } from 'react-icons/lu'
 import { SLOT_MAP, ALT, aspect } from '../config/images'
 import available from '../config/available-images.json'
@@ -14,7 +14,7 @@ const ICONS: Record<string, React.ComponentType<{ 'aria-hidden'?: boolean }>> = 
   cpu: LuCpu, gauge: LuGauge, monitor: LuMonitor, zap: LuZap, layers: LuLayers, activity: LuActivity,
   factory: LuFactory, sun: LuSun, recycle: LuRecycle, refresh: LuRefreshCw, folder: LuFolderOpen,
   news: LuNewspaper, briefcase: LuBriefcase, handshake: LuHandshake, users: LuUsers, globe: LuGlobe, mail: LuMail,
-  flame: LuFlame, flask: LuFlaskConical, droplets: LuDroplets, train: LuTrainFront, building: LuBuilding2, server: LuServer, mountain: LuMountain, grid: LuLayoutGrid, gear: LuSettings, motor: LuCircuitBoard, cube: LuBox, boxes: LuBoxes, copy: LuSquareStack, bridge: LuConstruction, beam: LuRuler,
+  flame: LuFlame, flask: LuFlaskConical, droplets: LuDroplets, train: LuTrainFront, building: LuBuilding2, server: LuServer, mountain: LuMountain, grid: LuLayoutGrid, gear: LuSettings, motor: LuCircuitBoard, cube: LuBox, boxes: LuBoxes, copy: LuSquareStack, bridge: LuConstruction, beam: LuRuler, "map-pin": LuMapPin,
 }
 export function Icon({ name }: { name: string }) {
   const C = ICONS[name] ?? LuCpu

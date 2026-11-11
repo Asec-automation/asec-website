@@ -7,6 +7,36 @@ import { useJobs } from '../content/live-jobs'
 import { WorldMap, markerGroup } from '../components/WorldMap'
 import { ContactForm } from '../components/ContactForm'
 import { ApplicationForm } from '../components/ApplicationForm'
+import { API_AVAILABLE } from '../content/live-jobs'
+import { getLang } from '../i18n'
+
+/** Exact address as listed on Google Maps (Maadi police district, Cairo). */
+const HQ_MAP_QUERY = '9 Street 286, El-Basatin Sharkeya, El Basatin, Cairo Governorate 4234220, Egypt'
+
+/** Live Google map on the real website; a styled card in the offline preview (preview viewers block Google frames). */
+function HqMap() {
+  const c = company.contact
+  if (!API_AVAILABLE) return (
+    <a className="hq-map-card" href={company.offices[0].mapUrl} target="_blank" rel="noopener noreferrer">
+      <span className="hq-map-card__pin" aria-hidden><Icon name="map-pin" /></span>
+      <strong>ASEC Automation — Head office</strong>
+      <span>{c.address}</span>
+      <span className="hq-map-card__go">Open in Google Maps <Arrow /></span>
+    </a>
+  )
+  return (
+    <div className="media hq-map" style={{ aspectRatio: '21 / 9', minHeight: 320 }}>
+      <iframe
+        title="Map of ASEC Automation head office, Maadi, Cairo"
+        src={`https://maps.google.com/maps?q=${encodeURIComponent(HQ_MAP_QUERY)}&hl=${getLang()}&z=16&output=embed`}
+        style={{ border: 0, width: '100%', height: '100%' }}
+        loading="lazy"
+        allowFullScreen
+        referrerPolicy="no-referrer-when-downgrade"
+      />
+    </div>
+  )
+}
 
 /* ============================== PROJECTS ============================== */
 export function Projects() {
@@ -321,19 +351,11 @@ export function Contact() {
               <p className="muted"><a href={`tel:${c.phoneHref}`}>{c.phone}</a> · <a href={`mailto:${c.email}`}>{c.email}</a></p>
             </div>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              <a className="btn btn--blue" href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent('ASEC Automation, 9 Street 286, El Basatin, Cairo 4234220, Egypt')}`} target="_blank" rel="noopener noreferrer">Get directions <Arrow /></a>
+              <a className="btn btn--blue" href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(HQ_MAP_QUERY)}`} target="_blank" rel="noopener noreferrer">Get directions <Arrow /></a>
               <a className="btn btn--outline" href={company.offices[0].mapUrl} target="_blank" rel="noopener noreferrer">Open in Google Maps</a>
             </div>
           </div>
-          <div className="media" style={{ aspectRatio: '21 / 9', minHeight: 320, background: '#e6e9f2' }}>
-            <iframe
-              title="Map of ASEC Automation head office, Maadi, Cairo"
-              src={`https://www.google.com/maps?q=${encodeURIComponent('ASEC Automation (ASA), 9 Street 286, El Basatin, Cairo 4234220, Egypt')}&output=embed`}
-              style={{ border: 0, width: '100%', height: '100%' }}
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
-          </div>
+          <HqMap />
         </div>
       </section>
     </>
