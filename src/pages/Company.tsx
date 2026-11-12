@@ -21,8 +21,7 @@ export function Certificates() {
   return (
     <section className="section" aria-labelledby="certs-title">
       <div className="container">
-        <SectionHead eyebrow="Certificates & accreditations" title={<span id="certs-title">Certified quality, safety and partnerships.</span>}
-          aside={REVIEW_MODE ? <StatusBadge status="proposed" label="Certificate scans needed" /> : undefined} />
+        <SectionHead eyebrow="Certificates & accreditations" title={<span id="certs-title">Certified quality, safety and partnerships.</span>} />
         <div className="cert-grid">
           {CERTS.map((c, i) => {
             const file = company.certificateFiles[c.name]
