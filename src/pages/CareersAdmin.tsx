@@ -7,6 +7,10 @@ const TOKEN_KEY = 'asec-careers-token'
 const TYPES = ['Full-time', 'Part-time', 'Contract', 'Internship']
 const blank = (): EditableJob => ({ slug: `job-${Date.now().toString(36)}`, title: '', department: '', location: '', type: 'Full-time', summary: '', responsibilities: [], requirements: [], show: true })
 const getToken = () => { try { return sessionStorage.getItem(TOKEN_KEY) || '' } catch { return '' } }
+const LAST_KEY = 'asec-careers-last-save'
+const lastSave = (): { savedAt: number; jobs: EditableJob[] } | null => {
+  try { const v = JSON.parse(localStorage.getItem(LAST_KEY) || 'null'); return v && Array.isArray(v.jobs) && Date.now() - v.savedAt < 10 * 60e3 ? v : null } catch { return null }
+}
 const setToken = (t: string) => { try { t ? sessionStorage.setItem(TOKEN_KEY, t) : sessionStorage.removeItem(TOKEN_KEY) } catch {} }
 
 export default function CareersAdmin() {
@@ -71,7 +75,13 @@ function Editor({ token, demo, onSignOut }: { token: string; demo: boolean; onSi
   useEffect(() => {
     if (demo) { setJobs([{ ...blank(), slug: 'demo-1', title: 'Senior PLC Engineer', department: 'Automation', location: 'Cairo, Egypt', summary: 'Lead PLC and SCADA projects for cement plants.', responsibilities: ['Design PLC logic', 'Commission control systems'], requirements: ['5+ years PLC experience', 'Siemens TIA Portal'] }]); return }
     fetch(`${CAREERS_API}?all=1`, { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store' })
-      .then(async (r) => { const d = await r.json().catch(() => ({})); if (r.status === 401) { onSignOut(); return } if (!r.ok) throw new Error(d.error); setJobs(d.jobs || []) })
+      .then(async (r) => {
+        const d = await r.json().catch(() => ({})); if (r.status === 401) { onSignOut(); return } if (!r.ok) throw new Error(d.error)
+        // Cloudflare can take up to a minute to show a new save everywhere; if this browser saved something newer, show that.
+        const mine = lastSave()
+        if (mine && mine.savedAt > (Number(d.savedAt) || 0)) setJobs(mine.jobs)
+        else setJobs(d.jobs || [])
+      })
       .catch((x) => setMsg({ kind: 'err', text: (x as Error).message || 'Couldn’t load the job list.' }))
       .finally(() => setLoading(false))
   }, [token, demo])
@@ -85,9 +95,16 @@ function Editor({ token, demo, onSignOut }: { token: string; demo: boolean; onSi
   const patch = (i: number, p: Partial<EditableJob>) => update(jobs.map((j, k) => (k === i ? { ...j, ...p } : j)))
   const move = (i: number, d: number) => { const n = [...jobs]; const t = n[i]; n[i] = n[i + d]; n[i + d] = t; update(n) }
   const add = () => { const j = blank(); update([j, ...jobs]); setOpen(j.slug) }
-  const remove = (i: number) => { if (window.confirm(`Delete “${jobs[i].title || 'this job'}”? This can’t be undone after you save.`)) update(jobs.filter((_, k) => k !== i)) }
+  /** Deleting saves straight away, so a deleted job can't come back by forgetting to press Save. */
+  const remove = (i: number) => {
+    if (!window.confirm(`Delete “${jobs[i].title || 'this job'}”? It will be removed from the Careers page straight away.`)) return
+    const rest = jobs.filter((_, k) => k !== i)
+    if (rest.some((j) => !j.title.trim())) { update(rest); setMsg({ kind: 'err', text: 'Deleted here — give every remaining job a title, then press Save and publish.' }); return }
+    setJobs(rest); save(rest, 'Deleted. The Careers page will update within about a minute.')
+  }
 
-  const save = async () => {
+  const save = async (src: EditableJob[] = jobs, okText = 'Saved. The Careers page will update within about a minute.') => {
+    const jobs = src
     const missing = jobs.findIndex((j) => !j.title.trim())
     if (missing >= 0) { setOpen(jobs[missing].slug); setMsg({ kind: 'err', text: 'Every job needs a title before saving.' }); return }
     const list = jobs.map((j) => ({ ...j, slug: j.slug.startsWith('job-') && j.title ? `${slugify(j.title)}-${j.slug.slice(4)}` : j.slug }))
@@ -98,7 +115,8 @@ function Editor({ token, demo, onSignOut }: { token: string; demo: boolean; onSi
       const d = await r.json().catch(() => ({}))
       if (r.status === 401) { setMsg({ kind: 'err', text: 'Your session expired. Copy any unsaved text, then sign in again.' }); return }
       if (!r.ok) throw new Error(d.error || 'Saving failed.')
-      setJobs(d.jobs); setDirty(false); setMsg({ kind: 'ok', text: 'Saved. The Careers page is updated.' })
+      setJobs(d.jobs); setDirty(false); setMsg({ kind: 'ok', text: okText })
+      try { localStorage.setItem(LAST_KEY, JSON.stringify({ savedAt: Number(d.savedAt) || Date.now(), jobs: d.jobs })) } catch {}
     } catch (x) { setMsg({ kind: 'err', text: (x as Error).message }) } finally { setSaving(false) }
   }
 
@@ -132,7 +150,7 @@ function Editor({ token, demo, onSignOut }: { token: string; demo: boolean; onSi
 
       <div className="ca-bar">
         <button type="button" className="btn btn--outline" onClick={add}><LuPlus aria-hidden /> Add a job</button>
-        <button type="button" className="btn btn--primary" onClick={save} disabled={saving || !dirty}><LuSave aria-hidden /> {saving ? 'Saving…' : 'Save and publish'}</button>
+        <button type="button" className="btn btn--primary" onClick={() => save()} disabled={saving || !dirty}><LuSave aria-hidden /> {saving ? 'Saving…' : 'Save and publish'}</button>
       </div>
       <div aria-live="polite">{msg && <p className={`ca-msg ca-msg--${msg.kind}`}>{msg.kind === 'ok' ? <LuCircleCheck aria-hidden /> : <LuTriangleAlert aria-hidden />}{msg.text}</p>}</div>
 

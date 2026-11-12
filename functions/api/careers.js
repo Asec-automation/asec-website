@@ -46,6 +46,12 @@ const cleanJob = (j, i) => ({
   show: j.show !== false, updated: new Date().toISOString(),
 })
 
+/** Stored as { savedAt, jobs }; older saves were a bare array. */
+function parseStore(raw) {
+  try { const v = JSON.parse(raw || '[]'); return Array.isArray(v) ? { jobs: v, savedAt: 0 } : { jobs: Array.isArray(v.jobs) ? v.jobs : [], savedAt: Number(v.savedAt) || 0 } }
+  catch { return { jobs: [], savedAt: 0 } }
+}
+
 export async function onRequest({ request, env }) {
   try {
     const kv = env.CAREERS_KV
@@ -56,8 +62,8 @@ export async function onRequest({ request, env }) {
     if (request.method === 'GET') {
       const all = url.searchParams.get('all') === '1'
       if (all && !(await validToken(env, auth))) return json(401, { error: 'Please sign in again.' })
-      const list = JSON.parse((await kv.get(KEY)) || '[]')
-      return json(200, { jobs: all ? list : list.filter((j) => j.show !== false) })
+      const { jobs: list, savedAt } = parseStore(await kv.get(KEY))
+      return json(200, { jobs: all ? list : list.filter((j) => j.show !== false), savedAt })
     }
 
     if (request.method === 'POST' && url.searchParams.get('action') === 'login') {
@@ -80,8 +86,9 @@ export async function onRequest({ request, env }) {
       const body = JSON.parse(text || '{}')
       if (!Array.isArray(body.jobs)) return json(400, { error: 'Invalid data.' })
       const jobs = body.jobs.slice(0, MAX_JOBS).map(cleanJob).filter((j) => j.title)
-      await kv.put(KEY, JSON.stringify(jobs))
-      return json(200, { ok: true, jobs })
+      const savedAt = Date.now()
+      await kv.put(KEY, JSON.stringify({ savedAt, jobs }))
+      return json(200, { ok: true, jobs, savedAt })
     }
 
     return json(405, { error: 'Method not allowed.' })
