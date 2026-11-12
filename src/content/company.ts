@@ -76,7 +76,7 @@ export const company = {
    */
   cloudflareAnalyticsToken: '',
   /** Approved company profile PDF, placed in public/docs/ (e.g. '/docs/ASEC-Automation-Profile.pdf'). Empty = button hidden. */
-  profilePdf: '',
+  profilePdf: '/docs/ASEC-Automation-Company-Profile-2025.pdf',
   /** Certificate scans (PDF or image) in public/docs/certificates/. Empty = card shows without a "View" link. */
   certificateFiles: {
     'ISO 9001': '',

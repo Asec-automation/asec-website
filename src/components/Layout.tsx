@@ -13,6 +13,8 @@ const AV = available as Record<string, string>
 
 type NavItem = { label: string; to: string; mega?: { label: string; to: string; text: string }[] }
 
+declare const __ROUTER_MODE__: 'history' | 'hash'
+
 export const NAV: NavItem[] = [
   { label: 'Home', to: '/' },
   { label: 'About', to: '/about' },
@@ -164,6 +166,7 @@ export function Footer() {
             <ul>
               <li><Link to="/projects">Projects</Link></li>
               <li><Link to="/partners">Partners & Technologies</Link></li>
+              {company.profilePdf && <li><a href={(typeof __ROUTER_MODE__ !== 'undefined' && __ROUTER_MODE__ === 'hash' ? company.siteUrl : '') + company.profilePdf} target="_blank" rel="noopener">Company profile (PDF)</a></li>}
             </ul>
           </div>
           <div>

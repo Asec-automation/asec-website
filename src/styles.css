@@ -1813,3 +1813,9 @@ html[lang="ar"] .logo__tag { font-family: "Aref Ruqaa", "IBM Plex Sans Arabic", 
 html[lang="ar"] .logo--footer .logo__tag { font-size: 18px; }
 @media (max-width: 960px) { .logo__tag { font-size: 13px; } }
 @media (max-width: 800px) { .logo__tag { font-size: 12px; } }
+
+/* ───────── Company profile buttons ───────── */
+.profile-btns { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 6px; }
+.profile-btns .btn svg { width: 18px; height: 18px; }
+.profile-btns__meta { font-size: 13px; }
+@media (max-width: 520px) { .profile-btns .btn { flex: 1 1 100%; justify-content: center; } }

@@ -1,5 +1,5 @@
 import React from 'react'
-import { LuDownload } from 'react-icons/lu'
+import { LuDownload, LuFileText } from 'react-icons/lu'
 import { Link } from '../lib/router'
 import { Img, Arrow, SectionHead, StatusBadge, CTASection, EmptyState, PageHero, Icon, Gallery, Stats, PartnerTile, PhotoTiles } from '../components/ui'
 import { company, facts, REVIEW_MODE } from '../content/company'
@@ -8,6 +8,22 @@ import { services } from '../content/expertise'
 import { WorldMap } from '../components/WorldMap'
 import { toolGroups } from '../content/software'
 import AV from '../config/available-images.json'
+
+/* ============================== COMPANY PROFILE ============================== */
+declare const __ROUTER_MODE__: 'history' | 'hash'
+/** Full URL in the offline preview (the PDF is not bundled there), site path on the live site. */
+export const profileHref = () =>
+  typeof __ROUTER_MODE__ !== 'undefined' && __ROUTER_MODE__ === 'hash' ? company.siteUrl + company.profilePdf : company.profilePdf
+export function ProfileButtons() {
+  const url = profileHref()
+  return (
+    <div className="profile-btns">
+      <a className="btn btn--blue" href={url} target="_blank" rel="noopener">View company profile <LuFileText aria-hidden /></a>
+      <a className="btn btn--outline" href={url} download="ASEC-Automation-Company-Profile-2025.pdf">Download PDF <LuDownload aria-hidden /></a>
+      <span className="muted profile-btns__meta">PDF · 60 pages · 14 MB</span>
+    </div>
+  )
+}
 
 /* ============================== CERTIFICATES ============================== */
 const CERTS: { name: string; title: string; text: string; icon: string }[] = [
@@ -58,7 +74,7 @@ export function About() {
             <div className="cert-strip"><strong>CERTIFIED</strong>{facts.certifications.map((c) => <span key={c}>{c}</span>)}</div>
             <p className="muted" style={{ fontSize: 14 }}>Award: {facts.award}</p>
             {company.profilePdf
-              ? <div><a className="btn btn--blue" href={company.profilePdf} download target="_blank" rel="noopener">Download our profile (PDF) <LuDownload aria-hidden /></a></div>
+              ? <ProfileButtons />
               : REVIEW_MODE && <div><StatusBadge status="missing" label="Company profile PDF needed for the download button" /></div>}
           </div>
           <div className="reveal" style={{ display: 'grid', gap: 18 }}>
