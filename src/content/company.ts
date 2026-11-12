@@ -65,7 +65,7 @@ export const company = {
    */
   careersEndpoint: 'https://formsubmit.co/careers@asecautomation.com',
   /** WhatsApp number in international format, digits only (e.g. '201001234567'). Empty = button hidden. */
-  whatsapp: '',
+  whatsapp: '201065648082', // +20 106 564 8082 — digits only, used for the WhatsApp chat button
   /** Public site URL, used for canonical links and the sitemap. */
   /** Public web address. Change to 'https://www.asecautomation.com' when the domain is connected. */
   siteUrl: 'https://asec-website.sara-sabry.workers.dev',
