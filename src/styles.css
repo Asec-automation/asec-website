@@ -29,7 +29,7 @@
   --shadow: 0 24px 60px -28px rgba(4, 15, 71, 0.35);
   --container: 1240px;
   --gutter: clamp(20px, 4vw, 48px);
-  --section: clamp(80px, 11vw, 150px);
+  --section: clamp(56px, 7vw, 96px);
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
