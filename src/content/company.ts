@@ -29,8 +29,8 @@ export const company = {
   contact: {
     email: 'contact@asecautomation.com',
     hrEmail: 'careers@asecautomation.com',
-    phone: '+20 2 2704 2601 / 3 / 5 / 6',
-    phoneHref: '+20227042601',
+    phone: '+20 106 564 8082',
+    phoneHref: '+201065648082',
     address: '9 Street 286, El-Basatin Sharkeya, Maadi, Cairo 4234220, Egypt',
     website: 'www.asecautomation.com',
     status: 'confirmed' as Status,
