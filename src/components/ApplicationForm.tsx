@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { company } from '../content/company'
-import { useJobs } from '../content/live-jobs'
+import { useJobs, API_AVAILABLE, INBOX_API } from '../content/live-jobs'
 import { Arrow } from './ui'
 import { href } from '../lib/router'
 
@@ -15,6 +15,7 @@ export function ApplicationForm() {
   const [file, setFile] = useState<File | null>(null)
   const [errors, setErrors] = useState<Errors>({})
   const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'error' | 'not-connected'>('idle')
+  const [errMsg, setErrMsg] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const sentRef = useRef(false)
@@ -46,26 +47,37 @@ export function ApplicationForm() {
     if (v.website) return
     if (!company.careersEndpoint) { setState('not-connected'); return }
     setState('sending')
-    if (viaFormSubmit) { sentRef.current = true; formRef.current?.submit(); return }
-    try {
-      const fd = new FormData()
-      fd.append('name', v.name); fd.append('email', v.email); fd.append('phone', v.phone)
-      fd.append('position', v.position); fd.append('coverLetter', v.letter); fd.append('consent', 'yes')
-      fd.append('cv', file!)
-      const res = await fetch(company.careersEndpoint, { method: 'POST', body: fd, headers: { Accept: 'application/json' } })
-      if (!res.ok) throw new Error(String(res.status))
-      setState('sent')
-    } catch { setState('error') }
+    // 1) Save the application and CV on the website (HR reads it in the careers admin inbox).
+    let saved = false
+    if (API_AVAILABLE) {
+      try {
+        const fd = new FormData()
+        fd.append('name', v.name); fd.append('email', v.email); fd.append('phone', v.phone)
+        fd.append('position', v.position); fd.append('coverLetter', v.letter); fd.append('cv', file!)
+        const res = await fetch(INBOX_API, { method: 'POST', body: fd, headers: { Accept: 'application/json' } })
+        const d = await res.json().catch(() => ({}))
+        if (res.status === 400 || res.status === 429) { setErrMsg(String(d.error || '')); setState('error'); return }
+        saved = res.ok
+      } catch { /* fall through to email */ }
+    }
+    // 2) Also send an email copy through FormSubmit (best effort).
+    if (viaFormSubmit) {
+      formRef.current?.submit()
+      if (saved) { setState('sent'); return }
+      sentRef.current = true; return
+    }
+    setState(saved ? 'sent' : 'error')
   }
 
-  if (state === 'sent') return <div className="notice notice--ok" role="status"><span>Thank you — your application and CV were received. Our HR team will be in touch if your profile matches an opening.</span></div>
+  const sink = viaFormSubmit && <iframe name="cv-sink" title="Application upload" style={{ display: 'none' }} onLoad={() => { if (sentRef.current) { sentRef.current = false; setState('sent') } }} />
+  if (state === 'sent') return <>{sink}<div className="notice notice--ok" role="status"><span>Thank you — your application and CV were received. Our HR team will be in touch if your profile matches an opening.</span></div></>
 
   const err = (k: keyof Errors) => errors[k] && <span className="field__err" id={`a-${k}-err`}>{errors[k]}</span>
   const a = (k: keyof Errors) => ({ id: `a-${k}`, 'aria-invalid': !!errors[k] || undefined, 'aria-describedby': errors[k] ? `a-${k}-err` : undefined })
 
   return (
     <>
-    {viaFormSubmit && <iframe name="cv-sink" title="Application upload" style={{ display: 'none' }} onLoad={() => { if (sentRef.current) { sentRef.current = false; setState('sent') } }} />}
+    {sink}
     <form ref={formRef} className="form" onSubmit={submit} noValidate aria-label="Job application form"
       {...(viaFormSubmit ? { action: company.careersEndpoint, method: 'POST', encType: 'multipart/form-data', target: 'cv-sink' } : {})}>
       {viaFormSubmit && <>
@@ -106,7 +118,7 @@ export function ApplicationForm() {
       </div>
       <div aria-live="polite">
         {state === 'not-connected' && <div className="notice notice--warn"><span>Online applications aren’t connected yet. Please email your CV to <a href={`mailto:${company.contact.hrEmail}?subject=${encodeURIComponent('Job application — ' + (v.name || ''))}`} style={{ textDecoration: 'underline', fontWeight: 600 }}>{company.contact.hrEmail}</a> instead.</span></div>}
-        {state === 'error' && <div className="notice notice--err"><span>Sorry — your application could not be sent. Please try again later.</span></div>}
+        {state === 'error' && <div className="notice notice--err"><span>{errMsg || 'Sorry — your application could not be sent. Please try again later.'}</span></div>}
       </div>
       <div><button className="btn btn--blue" type="submit" disabled={state === 'sending'}>{state === 'sending' ? 'Sending…' : 'Submit application'} <Arrow /></button></div>
     </form>

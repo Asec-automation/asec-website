@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { company } from '../content/company'
+import { API_AVAILABLE, INBOX_API } from '../content/live-jobs'
 import { href } from '../lib/router'
 import { Arrow } from './ui'
 
@@ -22,15 +23,22 @@ export function JobAlerts() {
     setErr('')
     if (honey) { setState('sent'); return }
     setState('sending')
+    let saved = false
+    if (API_AVAILABLE) {
+      try {
+        const r = await fetch(INBOX_API, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ kind: 'alert', email: email.trim(), area }) })
+        saved = r.ok
+      } catch { /* fall through */ }
+    }
     try {
       const r = await fetch(endpoint, {
         method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ email: email.trim(), 'Area of interest': area, formType: 'job-alert', _subject: `Job alert sign-up — ${area} — ${email.trim()}`, _template: 'table', _captcha: 'false', _replyto: email.trim() }),
       })
       const d = await r.json().catch(() => ({}))
-      if (!r.ok || String(d.success) === 'false') throw new Error()
-      setState('sent')
-    } catch { setState('error') }
+      if (r.ok && String(d.success) !== 'false') saved = true
+    } catch { /* email copy is optional */ }
+    setState(saved ? 'sent' : 'error')
   }
 
   return (

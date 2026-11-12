@@ -29,7 +29,7 @@ function equalBytes(a, b) { if (a.length !== b.length) return false; let d = 0; 
 
 const secretOf = (env) => env.CAREERS_TOKEN_SECRET || env.CAREERS_ADMIN_PASSWORD || ''
 async function makeToken(env) { const body = `careers.${Date.now() + TOKEN_HOURS * 3600e3}`; return `${body}.${await hmac(secretOf(env), body)}` }
-async function validToken(env, t) {
+export async function validToken(env, t) {
   if (!t || !secretOf(env)) return false
   const i = t.lastIndexOf('.'); if (i < 0) return false
   const body = t.slice(0, i), sig = t.slice(i + 1)

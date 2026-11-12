@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { company } from '../content/company'
+import { API_AVAILABLE, INBOX_API } from '../content/live-jobs'
 import { Arrow } from './ui'
 import { href } from '../lib/router'
 
@@ -42,13 +43,25 @@ export function ContactForm({ variant = 'general' }: { variant?: 'general' | 'bu
     if (v.website) return // honeypot: silently drop bots
     if (!company.formEndpoint) { setState('not-connected'); return }
     setState('sending')
+    const { website, ...payload } = v
+    // 1) Save on the website (read in the careers admin inbox).
+    let saved = false, why = ''
+    if (API_AVAILABLE) {
+      try {
+        const r = await fetch(INBOX_API, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ kind: 'contact', formType: variant, ...payload }) })
+        const d = await r.json().catch(() => ({}))
+        if (r.status === 400 || r.status === 429) { setDetail(String(d.error || '')); setState('error'); return }
+        saved = r.ok
+      } catch { /* fall through */ }
+    }
+    // 2) Email copy through FormSubmit (best effort).
     try {
-      const { website, ...payload } = v
       const res = await fetch(company.formEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ ...payload, formType: variant, _subject: `Website inquiry — ${payload.category || 'General'} — ${payload.name}`, _template: 'table', _captcha: 'false', _replyto: payload.email }) })
       const data = await res.json().catch(() => ({}))
       if (!res.ok || String((data as { success?: unknown }).success) === 'false') throw new Error(String((data as { message?: unknown }).message || `Error ${res.status}`))
-      setState('sent'); setV(empty)
-    } catch (x) { setDetail((x as Error).message); setState('error') }
+      saved = true
+    } catch (x) { why = (x as Error).message }
+    if (saved) { setState('sent'); setV(empty) } else { setDetail(why); setState('error') }
   }
 
   const f = (k: keyof Values, label: string, input: React.ReactNode, req = true) => (

@@ -3,6 +3,7 @@
  * Careers admin API at /api/careers (same code as the Pages Function).
  */
 import { onRequest as careers } from '../functions/api/careers.js'
+import { onRequest as inbox } from '../functions/api/inbox.js'
 
 /** Pages that were removed from the site → where to send visitors instead. */
 const MOVED = [
@@ -17,6 +18,7 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url)
     if (url.pathname === '/api/careers') return careers({ request, env, ctx })
+    if (url.pathname === '/api/inbox') return inbox({ request, env, ctx })
 
     // Forgiving addresses: /Careers/Admin → /careers/admin, old pages → new ones
     let path = url.pathname

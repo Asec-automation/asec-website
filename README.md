@@ -125,3 +125,14 @@ It creates 800px phone copies (`name-800.webp`) and the site serves them to smal
 ## Company profile & certificates
 - Profile: put the approved PDF in `public/docs/` and set `profilePdf` in `src/content/company.ts`.
 - Certificates: put scans in `public/docs/certificates/` and fill `certificateFiles` in the same file.
+
+## Website inbox (applications, CVs, messages)
+Every job application (with CV), contact message and job-alert sign-up is saved in Cloudflare KV
+(the same `CAREERS_KV` namespace) by `functions/api/inbox.js`. HR reads them at `/careers/admin` → **Inbox**:
+download CVs, reply by email, mark read, delete. Email copies are also sent through FormSubmit (best effort).
+
+### Optional: email copies from your own domain (after asecautomation.com is on Cloudflare)
+1. Cloudflare → asecautomation.com → **Email** → **Email Routing** → enable, and verify contact@ and careers@ as destination addresses.
+2. Add to `wrangler.jsonc`:
+   `"send_email": [{ "name": "INBOX_EMAIL" }]`
+3. Worker → Settings → Variables: `INBOX_FROM` = `website@asecautomation.com`, `INBOX_TO_CONTACT` = `contact@asecautomation.com`, `INBOX_TO_CAREERS` = `careers@asecautomation.com`.

@@ -5,6 +5,8 @@ declare const __ROUTER_MODE__: 'history' | 'hash'
 /** The careers API exists only on the hosted site (Cloudflare Pages), not in the single-file preview. */
 export const API_AVAILABLE = typeof __ROUTER_MODE__ === 'undefined' || __ROUTER_MODE__ === 'history'
 export const CAREERS_API = '/api/careers'
+/** Website inbox: stores contact messages, applications (with CV) and job alerts on the site itself. */
+export const INBOX_API = '/api/inbox'
 
 export interface EditableJob extends Job { show?: boolean }
 

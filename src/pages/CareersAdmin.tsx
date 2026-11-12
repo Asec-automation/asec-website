@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { LuLock, LuLogOut, LuPlus, LuTrash2, LuEye, LuEyeOff, LuArrowUp, LuArrowDown, LuUpload, LuDownload, LuSave, LuCircleCheck, LuTriangleAlert } from 'react-icons/lu'
+import { LuLock, LuLogOut, LuPlus, LuTrash2, LuEye, LuEyeOff, LuArrowUp, LuArrowDown, LuUpload, LuDownload, LuSave, LuCircleCheck, LuTriangleAlert, LuInbox, LuBriefcase } from 'react-icons/lu'
+import { AdminInbox } from './AdminInbox'
 import { Link } from '../lib/router'
 import { API_AVAILABLE, CAREERS_API, csvToJobs, jobsToCsv, slugify, type EditableJob } from '../content/live-jobs'
 
@@ -21,9 +22,30 @@ export default function CareersAdmin() {
   return (
     <section className="ca">
       <div className="container">
-        {token || demo ? <Editor token={token} demo={demo} onSignOut={signOut} /> : <Login onToken={(t) => { setToken(t); setTok(t) }} onDemo={() => setDemo(true)} />}
+        {token || demo ? <Workspace token={token} demo={demo} onSignOut={signOut} /> : <Login onToken={(t) => { setToken(t); setTok(t) }} onDemo={() => setDemo(true)} />}
       </div>
     </section>
+  )
+}
+
+function Workspace({ token, demo, onSignOut }: { token: string; demo: boolean; onSignOut: () => void }) {
+  const [tab, setTab] = useState<'jobs' | 'inbox'>(() => { try { return (location.hash.includes('inbox') ? 'inbox' : 'jobs') } catch { return 'jobs' } })
+  const [unread, setUnread] = useState(0)
+  return (
+    <>
+      <div className="ca-tabs" role="tablist" aria-label="Careers admin sections">
+        <button type="button" role="tab" aria-selected={tab === 'jobs'} className={tab === 'jobs' ? 'is-on' : ''} onClick={() => setTab('jobs')}><LuBriefcase aria-hidden /> Job openings</button>
+        <button type="button" role="tab" aria-selected={tab === 'inbox'} className={tab === 'inbox' ? 'is-on' : ''} onClick={() => setTab('inbox')}><LuInbox aria-hidden /> Inbox{unread > 0 && <span className="ca-tabs__n">{unread} new</span>}</button>
+      </div>
+      <div hidden={tab !== 'jobs'}><Editor token={token} demo={demo} onSignOut={onSignOut} /></div>
+      <div hidden={tab !== 'inbox'}>
+        <div className="ca-ed__head" style={{ marginBottom: 18 }}>
+          <div><h1>Inbox{demo && <span className="ca-tag">Demo</span>}</h1><p>Job applications with CVs, contact messages and job-alert sign-ups from the website.</p></div>
+          <div className="ca-ed__actions"><button type="button" className="ca-btn" onClick={onSignOut}><LuLogOut aria-hidden /> Sign out</button></div>
+        </div>
+        <AdminInbox token={token} demo={demo} onSignOut={onSignOut} onCount={setUnread} />
+      </div>
+    </>
   )
 }
 
@@ -47,7 +69,7 @@ function Login({ onToken, onDemo }: { onToken: (t: string) => void; onDemo: () =
     <div className="ca-login">
       <span className="ca-login__icon"><LuLock aria-hidden /></span>
       <h1>Careers admin</h1>
-      <p>Sign in to add, edit or hide job openings on the Careers page.</p>
+      <p>Sign in to manage job openings and read applications, CVs and messages.</p>
       <form onSubmit={submit} noValidate>
         <label htmlFor="ca-pw">Password</label>
         <div className="ca-pw">

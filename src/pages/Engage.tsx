@@ -454,8 +454,8 @@ export const Privacy = () => (
     </ul>
     <h2>Third-party processors</h2>
     <ul>
-      <li>FormSubmit delivers contact-form messages, job applications and job-alert sign-ups to our company mailboxes.</li>
-      <li>Cloudflare hosts this website and may provide privacy-friendly visitor statistics that do not use cookies.</li>
+      <li>Cloudflare hosts this website and securely stores form submissions, including CVs, so that only our authorised staff can read them. It may also provide privacy-friendly visitor statistics that do not use cookies.</li>
+      <li>FormSubmit delivers email copies of contact-form messages, job applications and job-alert sign-ups to our company mailboxes.</li>
       <li>Google provides the fonts and the embedded map on the Contact page.</li>
     </ul>
     <h2>Retention</h2>
