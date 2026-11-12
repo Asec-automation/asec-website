@@ -258,7 +258,7 @@ export function ProjectDetail({ slug }: { slug: string }) {
       <section className="section section--tight">
         <div className="container pd-grid">
           <div className="pd-gallery">
-            {pics.length > 0 && <div className="pd-gallery__main media"><img src={pics[cur]} {...responsive(pics[cur], '(max-width: 960px) 100vw, 66vw')} alt={`${p.title} — photo ${cur + 1}`} /></div>}
+            {pics.length > 0 && <div className="pd-gallery__main media" style={{ ['--pd-bg' as string]: `url(${pics[cur]})` } as React.CSSProperties}><img src={pics[cur]} {...responsive(pics[cur], '(max-width: 960px) 100vw, 66vw')} alt={`${p.title} — photo ${cur + 1}`} /></div>}
             {pics.length > 1 && <div className="pc__thumbs">{pics.map((src, i) => (
               <button key={src} type="button" className={i === cur ? 'is-on' : ''} onClick={() => setCur(i)} aria-label={`Show photo ${i + 1}`}><img src={src} alt="" loading="lazy" /></button>
             ))}</div>}

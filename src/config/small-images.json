@@ -71,6 +71,10 @@
   "small": "/images/expertise/testing-800.webp",
   "w": 1672
  },
+ "/images/gallery/project-commissioning-cement.webp": {
+  "small": "/images/gallery/project-commissioning-cement-800.webp",
+  "w": 1188
+ },
  "/images/global/algeria.webp": {
   "small": "/images/global/algeria-800.webp",
   "w": 1200
@@ -135,6 +139,14 @@
   "small": "/images/home/home-hero-800.webp",
   "w": 1440
  },
+ "/images/industries/infrastructure.webp": {
+  "small": "/images/industries/infrastructure-800.webp",
+  "w": 1284
+ },
+ "/images/industries/process.webp": {
+  "small": "/images/industries/process-800.webp",
+  "w": 1300
+ },
  "/images/innovation/hero.webp": {
   "small": "/images/innovation/hero-800.webp",
   "w": 1600
@@ -159,6 +171,10 @@
   "small": "/images/projects/oggaz-ccr-800.webp",
   "w": 1600
  },
+ "/images/projects/refs/ahly-parking-1.webp": {
+  "small": "/images/projects/refs/ahly-parking-1-800.webp",
+  "w": 1070
+ },
  "/images/solutions/hero.webp": {
   "small": "/images/solutions/hero-800.webp",
   "w": 1672
@@ -170,5 +186,13 @@
  "/images/sustainability/solar.webp": {
   "small": "/images/sustainability/solar-800.webp",
   "w": 1228
+ },
+ "/images/tech/analytics.webp": {
+  "small": "/images/tech/analytics-800.webp",
+  "w": 1312
+ },
+ "/images/tech/control-room.webp": {
+  "small": "/images/tech/control-room-800.webp",
+  "w": 1312
  }
 }
