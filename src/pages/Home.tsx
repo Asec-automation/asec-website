@@ -13,10 +13,10 @@ function Hero() {
       <div className="container hero__content">
         <p className="hero__brand">{company.officialTagline.value}</p>
         <h1 id="hero-title" className="display hero__title">
-          <span className="line"><span>Engineering Intelligence.</span></span>
-          <span className="line"><span className="accent">Automating Industry.</span></span>
+          <span className="line"><span>Powering heavy industry.</span></span>
+          <span className="line"><span className="accent">Since {facts.founded}.</span></span>
         </h1>
-        <p className="hero__sub">Automation and electrical engineering for some of the world’s most demanding heavy industries — since {facts.founded}.</p>
+        <p className="hero__sub">Automation and electrical engineering for some of the world’s most demanding heavy industries.</p>
         <div className="btn-row">
           <Link to="/projects" className="btn btn--primary">View Our Projects <Arrow /></Link>
           <Link to="/about" className="btn btn--ghost">Discover ASEC</Link>
