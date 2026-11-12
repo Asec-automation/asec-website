@@ -10,7 +10,26 @@
     "binding": "ASSETS",
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "404-page",
-    "run_worker_first": true
+    // Only these paths run the Worker (counts toward the free 100k/day). Everything else is a
+    // static asset: free and unlimited on Cloudflare's free plan.
+    "run_worker_first": [
+      "/api/*",
+      "/expertise", "/expertise/*",
+      "/solutions", "/solutions/*",
+      "/industries", "/industries/*",
+      "/innovation", "/innovation/*",
+      "/sustainability", "/sustainability/*",
+      "/news", "/news/*",
+      "/insights", "/insights/*",
+      "/career", "/career/*",
+      "/partners-technologies", "/partners-technologies/*",
+      "/technologies", "/technologies/*",
+      "/technology", "/technology/*",
+      "/contact-us", "/contact-us/*",
+      "/contactus", "/contactus/*",
+      "/about-us", "/about-us/*",
+      "/aboutus", "/aboutus/*"
+    ]
   },
   // Careers job storage (Workers KV namespace "asec-careers")
   "kv_namespaces": [{ "binding": "CAREERS_KV", "id": "8a816a7620ad41a28e67d2b765cd51e6" }]
