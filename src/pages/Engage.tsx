@@ -300,7 +300,7 @@ export function Careers() {
     <>
       <PageHero image="CAREERS_HERO_01" eyebrow="Careers" crumbs={[{ label: 'Careers' }]}
         title={<>Build the future of <span className="accent">industrial automation.</span></>} lead="Join engineers and specialists who work where technology meets heavy industry." />
-      <section className="section">
+      <section className="section" style={{ paddingBottom: 'clamp(48px, 5vw, 72px)' }}>
         <div className="container split">
           <div className="reveal" style={{ display: 'grid', gap: 20 }}>
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}><span className="eyebrow">Culture</span><StatusBadge status="proposed" /></div>
@@ -316,7 +316,7 @@ export function Careers() {
           <Img id="CAREERS_CULTURE_01" style={{ aspectRatio: '4/3' }} />
         </div>
       </section>
-      <section className="section section--soft" id="openings">
+      <section className="section section--soft" id="openings" style={{ paddingTop: 'clamp(48px, 5vw, 72px)' }}>
         <div className="container">
           <SectionHead eyebrow="Open positions" title="Current openings." />
           {jobs.length > 3 && <div className="toolbar" role="search"><label className="sr-only" htmlFor="jq">Search jobs</label><input id="jq" placeholder="Search by title, location or department…" value={q} onChange={(e) => setQ(e.target.value)} /></div>}
