@@ -26,6 +26,7 @@ export function ContactForm({ variant = 'general' }: { variant?: 'general' | 'bu
   const [v, setV] = useState<Values>({ ...empty, category: variant === 'business' ? 'Business / project inquiry' : '' })
   const [errors, setErrors] = useState<ReturnType<typeof validate>>({})
   const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'error' | 'not-connected'>('idle')
+  const [detail, setDetail] = useState('')
   const set = (k: keyof Values) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setV((p) => ({ ...p, [k]: e.target.type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value }))
 
@@ -45,9 +46,9 @@ export function ContactForm({ variant = 'general' }: { variant?: 'general' | 'bu
       const { website, ...payload } = v
       const res = await fetch(company.formEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ ...payload, formType: variant, _subject: `Website inquiry — ${payload.category || 'General'} — ${payload.name}`, _template: 'table', _captcha: 'false', _replyto: payload.email }) })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok || String((data as { success?: unknown }).success) === 'false') throw new Error(String(res.status))
+      if (!res.ok || String((data as { success?: unknown }).success) === 'false') throw new Error(String((data as { message?: unknown }).message || `Error ${res.status}`))
       setState('sent'); setV(empty)
-    } catch { setState('error') }
+    } catch (x) { setDetail((x as Error).message); setState('error') }
   }
 
   const f = (k: keyof Values, label: string, input: React.ReactNode, req = true) => (
@@ -98,7 +99,7 @@ export function ContactForm({ variant = 'general' }: { variant?: 'general' | 'bu
             Your message has <strong>not</strong> been sent: online submissions are not connected yet. The site administrator needs to add a form endpoint in <code>src/content/company.ts</code>.
           </span></div>
         )}
-        {state === 'error' && <div className="notice notice--err">Sorry — your message could not be delivered. Please try again, or email us at <a href={`mailto:${company.contact.email}`} style={{ textDecoration: 'underline' }}>{company.contact.email}</a>.</div>}
+        {state === 'error' && <div className="notice notice--err">Sorry — your message could not be delivered. Please try again, or email us at <a href={`mailto:${company.contact.email}`} style={{ textDecoration: 'underline' }}>{company.contact.email}</a>.{detail && <small style={{ display: 'block', marginTop: 6, opacity: .8 }}>({detail})</small>}</div>}
       </div>
       <div><button className="btn btn--blue" type="submit" disabled={state === 'sending'}>{state === 'sending' ? 'Sending…' : 'Send message'} <Arrow /></button></div>
     </form>
