@@ -5,7 +5,8 @@
  *   POST   /api/inbox              → public: multipart (application + CV) or JSON (contact / alert)
  *   GET    /api/inbox              → list (login token)
  *   GET    /api/inbox?id=ID        → one item with full text (login token)
- *   GET    /api/inbox?cv=ID        → the CV file (login token)
+ *   GET    /api/inbox?cv=ID        → a signed 10-minute link to the CV (login token)
+ *   GET    /api/inbox?file=…&sig=… → the CV file itself (signed link)
  *   PATCH  /api/inbox?id=ID        → { read: true|false } (login token)
  *   DELETE /api/inbox?id=ID        → delete item and CV (login token)
  *
@@ -13,7 +14,7 @@
  * binding named INBOX_EMAIL plus the variables INBOX_FROM (e.g. website@asecautomation.com),
  * INBOX_TO_CONTACT and INBOX_TO_CAREERS. Without them, items are only stored (nothing is lost).
  */
-import { validToken } from './careers.js'
+import { validToken, hmac, secretOf } from './careers.js'
 
 const P_ITEM = 'asec:inbox:item:'
 const P_CV = 'asec:inbox:cv:'
@@ -114,15 +115,31 @@ export async function onRequest({ request, env, ctx }) {
       return json(200, { ok: true })
     }
 
+    // Signed, 10-minute CV links: the browser downloads (or opens) them directly — no sign-in header needed.
+    if (request.method === 'GET' && url.searchParams.get('file')) {
+      const fid = clean(url.searchParams.get('file'), 60), exp = Number(url.searchParams.get('exp')), mode = url.searchParams.get('mode') === 'view' ? 'view' : 'download'
+      const ok = secretOf(env) && exp > Date.now() && url.searchParams.get('sig') === (await hmac(secretOf(env), `cv.${fid}.${exp}.${mode}`))
+      if (!ok) return new Response('This download link has expired. Go back to the careers admin and press Download CV again.', { status: 403, headers: { 'Content-Type': 'text/plain; charset=utf-8' } })
+      const { value, metadata } = await kv.getWithMetadata(P_CV + fid, { type: 'arrayBuffer' })
+      if (!value) return new Response('File not found.', { status: 404 })
+      const name = (metadata && metadata.name) || 'cv.pdf'
+      const ascii = name.replace(/[^\x20-\x7e]/g, '_').replace(/["\\]/g, '')
+      return new Response(value, { headers: {
+        'Content-Type': (metadata && metadata.type) || 'application/octet-stream',
+        'Content-Disposition': `${mode === 'view' ? 'inline' : 'attachment'}; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(name)}`,
+        'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff',
+      } })
+    }
+
     const auth = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '')
     if (!(await validToken(env, auth))) return json(401, { error: 'Please sign in again.' })
     const id = clean(url.searchParams.get('id') || url.searchParams.get('cv'), 60)
 
     if (request.method === 'GET' && url.searchParams.get('cv')) {
-      const { value, metadata } = await kv.getWithMetadata(P_CV + id, 'arrayBuffer')
-      if (!value) return json(404, { error: 'File not found.' })
-      const name = (metadata && metadata.name) || 'cv'
-      return new Response(value, { headers: { 'Content-Type': (metadata && metadata.type) || 'application/octet-stream', 'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(name)}`, 'Cache-Control': 'no-store' } })
+      const mode = url.searchParams.get('mode') === 'view' ? 'view' : 'download'
+      const exp = Date.now() + 10 * 60e3
+      const sig = await hmac(secretOf(env), `cv.${id}.${exp}.${mode}`)
+      return json(200, { url: `${url.pathname}?file=${encodeURIComponent(id)}&exp=${exp}&mode=${mode}&sig=${sig}` })
     }
     if (request.method === 'GET' && id) {
       const v = await kv.get(P_ITEM + id)

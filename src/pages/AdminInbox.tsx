@@ -64,12 +64,18 @@ export function AdminInbox({ token, demo, onSignOut, onCount }: { token: string;
     setItems((l) => l.filter((i) => i.id !== it.id)); setOpen(null)
     if (!demo) await fetch(`${INBOX_API}?id=${encodeURIComponent(it.id)}`, { method: 'DELETE', headers: auth }).catch(() => {})
   }
-  const downloadCv = async (it: Summary) => {
-    if (demo) { window.alert('Demo only — on the live site this downloads the CV.'); return }
-    const r = await fetch(`${INBOX_API}?cv=${encodeURIComponent(it.id)}`, { headers: auth, cache: 'no-store' })
-    if (!r.ok) { window.alert('The CV could not be downloaded. Please try again.'); return }
-    const a = document.createElement('a'); a.href = URL.createObjectURL(await r.blob()); a.download = it.cv?.name || 'cv'
-    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000)
+  /** Ask the server for a short-lived signed link, then let the browser download or open it natively. */
+  const openCv = async (it: Summary, mode: 'download' | 'view') => {
+    if (demo) { window.alert('Demo only — on the live site this opens the CV.'); return }
+    const tab = mode === 'view' ? window.open('', '_blank') : null
+    try {
+      const r = await fetch(`${INBOX_API}?cv=${encodeURIComponent(it.id)}&mode=${mode}`, { headers: auth, cache: 'no-store' })
+      const d = await r.json().catch(() => ({}))
+      if (r.status === 401) { tab?.close(); onSignOut(); return }
+      if (!r.ok || !d.url) throw new Error()
+      if (tab) tab.location.href = d.url
+      else { const a = document.createElement('a'); a.href = d.url; a.download = it.cv?.name || 'cv'; document.body.appendChild(a); a.click(); a.remove() }
+    } catch { tab?.close(); window.alert('The CV could not be opened. Please try again.') }
   }
 
   return (
@@ -117,7 +123,8 @@ export function AdminInbox({ token, demo, onSignOut, onCount }: { token: string;
                     {f?.message && <div className="ib__msg">{f.message}</div>}
                     {!f && <p className="muted">Loading…</p>}
                     <div className="ib__actions">
-                      {it.cv && <button type="button" className="btn btn--blue" onClick={() => downloadCv(it)}><LuDownload aria-hidden /> Download CV <small>({it.cv.name} · {mb(it.cv.size)})</small></button>}
+                      {it.cv && <button type="button" className="btn btn--blue" onClick={() => openCv(it, 'view')}><LuFileText aria-hidden /> Open CV</button>}
+                      {it.cv && <button type="button" className="btn btn--outline" onClick={() => openCv(it, 'download')}><LuDownload aria-hidden /> Download CV <small>({it.cv.name} · {mb(it.cv.size)})</small></button>}
                       <a className="btn btn--outline" href={`mailto:${it.email}?subject=${encodeURIComponent(it.kind === 'application' ? `Your application to ASEC Automation${it.title ? ` — ${it.title}` : ''}` : 'Re: your message to ASEC Automation')}`}><LuMail aria-hidden /> Reply by email</a>
                       <button type="button" className="ca-btn" onClick={() => setRead(it.id, !it.read)}>{it.read ? <><LuMail aria-hidden /> Mark as unread</> : <><LuMailOpen aria-hidden /> Mark as read</>}</button>
                       <button type="button" className="ca-btn is-danger" onClick={() => remove(it)}><LuTrash2 aria-hidden /> Delete</button>
