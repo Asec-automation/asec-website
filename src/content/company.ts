@@ -38,8 +38,8 @@ export const company = {
   offices: [
     { country: 'Egypt', label: 'Head office', address: '9 Street 286, El-Basatin Sharkeya, Maadi, Cairo 4234220, Egypt', mapUrl: 'https://share.google/eQS8scbe6vybANS2W' },
     { country: 'UAE', label: 'Branch', address: 'Al Jazeera Al Hamra, Ras Al Khaimah 31291, UAE' },
-    { country: 'Saudi Arabia', label: 'Branch — ASA (Saudi)', address: 'Saudi Arabia — full address to be confirmed' },
-    { country: 'Libya', label: 'Branch', address: 'Libya — full address to be confirmed' },
+    { country: 'Saudi Arabia', label: 'Branch — ASA (Saudi)', address: '' },
+    { country: 'Libya', label: 'Branch', address: '' },
   ],
   /** Social profile URLs. The profile lists handles only — paste full URLs to show icons. */
   social: {
@@ -143,4 +143,4 @@ export const facts = {
 }
 
 /** Show draft/placeholder markers to reviewers. Set to false for launch. */
-export const REVIEW_MODE = true
+export const REVIEW_MODE = false

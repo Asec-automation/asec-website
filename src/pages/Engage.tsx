@@ -199,8 +199,8 @@ export function GlobalPresence() {
                 <span className="gp3-branch__n">{String(i + 1).padStart(2, '0')}</span>
                 <span className="gp3-branch__label">{o.label}</span>
                 <h3>{o.country}</h3>
-                <p>{o.address}</p>
-                {!/to be confirmed/i.test(o.address) && <a href={'mapUrl' in o && o.mapUrl ? (o.mapUrl as string) : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(o.address)}`} target="_blank" rel="noopener noreferrer" className="gp3-branch__link">Open in Maps <Arrow /></a>}
+                {o.address && <p>{o.address}</p>}
+                {o.address && <a href={'mapUrl' in o && o.mapUrl ? (o.mapUrl as string) : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(o.address)}`} target="_blank" rel="noopener noreferrer" className="gp3-branch__link">Open in Maps <Arrow /></a>}
               </div>
             ))}
           </div>
@@ -392,8 +392,8 @@ export function Contact() {
                 {company.offices.map((o) => (
                   <li key={o.country}>
                     <strong>{o.country}</strong> <span className="muted">— {o.label}</span><br />
-                    <span style={{ fontSize: 14.5 }}>{o.address}</span><br />
-                    {!/to be confirmed/i.test(o.address) && <a className="text-link" href={'mapUrl' in o && o.mapUrl ? o.mapUrl : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(o.address)}`} target="_blank" rel="noopener noreferrer">Open in Google Maps <Arrow /></a>}
+                    {o.address && <><span style={{ fontSize: 14.5 }}>{o.address}</span><br /></>}
+                    {o.address && <a className="text-link" href={'mapUrl' in o && o.mapUrl ? o.mapUrl : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(o.address)}`} target="_blank" rel="noopener noreferrer">Open in Google Maps <Arrow /></a>}
                   </li>
                 ))}
               </ul>
@@ -427,46 +427,66 @@ function Legal({ title, children }: { title: string; children: React.ReactNode }
   return (
     <>
       <section className="section section--dark" style={{ paddingTop: 170, paddingBottom: 70 }}>
-        <div className="container" style={{ display: 'grid', gap: 18 }}><span className="eyebrow">Legal</span><h1 className="h1">{title}</h1><div><StatusBadge status="proposed" label="Template — requires legal review" /></div></div>
+        <div className="container" style={{ display: 'grid', gap: 18 }}><span className="eyebrow">Legal</span><h1 className="h1">{title}</h1><p className="muted" style={{ color: 'rgba(255,255,255,.7)' }}>Last updated: November 2026</p></div>
       </section>
       <section className="section"><div className="container"><div className="prose">{children}</div></div></section>
     </>
   )
 }
+const Mail = () => <a href={`mailto:${company.contact.email}`}>{company.contact.email}</a>
 export const Privacy = () => (
   <Legal title="Privacy Policy">
-    <p>This template must be reviewed by ASEC’s legal advisers and adapted to the jurisdictions in which ASEC operates before publication.</p>
+    <p>This policy explains how ASEC Automation (“ASEC”, “we”) handles personal information collected through this website.</p>
     <h2>Information we collect</h2>
-    <p>When you use our contact form we collect the details you provide — such as your name, company, email address, phone number, country and message — to respond to your inquiry.</p>
+    <ul>
+      <li>Contact form: your name, company, email address, phone number, country, inquiry type and message.</li>
+      <li>Job applications: your name, contact details, the position you apply for, your cover letter and your CV.</li>
+      <li>Job alerts: your email address and the area of work you are interested in.</li>
+    </ul>
+    <p>We do not ask for sensitive personal information. Please do not include it in your messages or CV unless it is necessary.</p>
     <h2>How we use it</h2>
-    <ul><li>To respond to your inquiry and follow up on business opportunities you request.</li><li>To keep a record of correspondence.</li><li>We do not sell personal information.</li></ul>
+    <ul>
+      <li>To respond to your inquiry and follow up on business opportunities you request.</li>
+      <li>To assess job applications and contact candidates.</li>
+      <li>To email you about job openings, if you signed up for job alerts.</li>
+      <li>To keep a record of correspondence.</li>
+      <li>We do not sell personal information.</li>
+    </ul>
     <h2>Third-party processors</h2>
-    <p>Form submissions may be delivered through a third-party form service. Fonts may be loaded from Google Fonts. [List the processors actually used before publishing.]</p>
+    <ul>
+      <li>FormSubmit delivers contact-form messages, job applications and job-alert sign-ups to our company mailboxes.</li>
+      <li>Cloudflare hosts this website and may provide privacy-friendly visitor statistics that do not use cookies.</li>
+      <li>Google provides the fonts and the embedded map on the Contact page.</li>
+    </ul>
     <h2>Retention</h2>
-    <p>[Retention period to be defined by ASEC.]</p>
+    <p>We keep inquiries for as long as needed to handle them and maintain the business relationship. Job applications are kept for as long as they are needed for recruitment. Job-alert sign-ups are kept until you unsubscribe. Information that is no longer needed is deleted.</p>
     <h2>Your rights</h2>
-    <p>You may request access to, correction or deletion of your personal data by contacting [contact address to be provided].</p>
+    <p>You may request access to, correction or deletion of your personal data, or unsubscribe from job alerts, by contacting <Mail />.</p>
   </Legal>
 )
 export const Terms = () => (
   <Legal title="Terms of Use">
-    <p>This template must be reviewed by ASEC’s legal advisers before publication.</p>
     <h2>Use of this website</h2>
     <p>The content of this website is provided for general information about {company.name.value} and its capabilities. It does not constitute an offer or engineering advice for any specific installation.</p>
     <h2>Intellectual property</h2>
     <p>Unless otherwise stated, content on this site is owned by {company.name.value}. Third-party trademarks belong to their respective owners and their display does not imply endorsement.</p>
-    <h2>Illustrative content</h2>
-    <p>Any dashboard or chart labelled “Illustrative Demo” uses synthetic data and does not represent any real plant.</p>
+    <h2>Accuracy</h2>
+    <p>We take care to keep the information on this website accurate and up to date, but it may change without notice and is provided “as is”.</p>
     <h2>Liability</h2>
-    <p>[Liability and governing-law clauses to be provided by legal counsel.]</p>
+    <p>To the extent permitted by law, ASEC Automation is not liable for any loss arising from the use of this website or reliance on its content. Links to other websites are provided for convenience; we are not responsible for their content.</p>
+    <h2>Governing law</h2>
+    <p>These terms are governed by the laws of the Arab Republic of Egypt.</p>
+    <h2>Contact</h2>
+    <p>Questions about these terms can be sent to <Mail />.</p>
   </Legal>
 )
 export function Cookies() {
   return (
     <Legal title="Cookie Preferences">
-      <p>This website does not set advertising or analytics cookies, and sets no cookies of its own.</p>
+      <p>This website does not set advertising cookies, and sets no cookies of its own.</p>
+      <p>Visitor statistics, where used, are collected by Cloudflare Web Analytics, which does not use cookies.</p>
       <p>The Contact page shows an embedded Google Map of our Cairo head office. Google may set its own cookies when that map loads.</p>
-      <p>If analytics are added later, this page should be updated and a consent mechanism enabled before any non-essential cookies are set.</p>
+      <p>Questions about cookies can be sent to <Mail />.</p>
     </Legal>
   )
 }
