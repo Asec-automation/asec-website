@@ -43,12 +43,12 @@ export const company = {
   ],
   /** Social profile URLs. The profile lists handles only — paste full URLs to show icons. */
   social: {
-    linkedin: '',
+    linkedin: 'https://www.linkedin.com/company/3069601/',
     facebook: '',
     youtube: '',
     x: '',
   },
-  socialHandles: 'LinkedIn: ASA-Automation · Facebook: @ASA-Automation · X/Twitter: @ASA_Automation',
+  socialHandles: '',
   /**
    * Contact form delivery. This static edition has no server of its own, so
    * submissions must go to a form service (e.g. Formspree, Basin, Getform —

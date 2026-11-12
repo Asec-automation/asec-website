@@ -1819,3 +1819,7 @@ html[lang="ar"] .logo--footer .logo__tag { font-size: 18px; }
 .profile-btns .btn svg { width: 18px; height: 18px; }
 .profile-btns__meta { font-size: 13px; }
 @media (max-width: 520px) { .profile-btns .btn { flex: 1 1 100%; justify-content: center; } }
+.footer__social { display: flex; gap: 12px; flex-wrap: wrap; }
+.footer__social a { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 999px; border: 1px solid rgba(255,255,255,.22); color: #fff; font-weight: 600; font-size: 14px; transition: background .2s, border-color .2s; }
+.footer__social a:hover { background: #0A66C2; border-color: #0A66C2; }
+.footer__social svg { width: 18px; height: 18px; }

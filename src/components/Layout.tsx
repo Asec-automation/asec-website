@@ -6,6 +6,7 @@ import { company, REVIEW_MODE } from '../content/company'
 import { services } from '../content/expertise'
 import available from '../config/available-images.json'
 import { Arrow } from './ui'
+import { FaLinkedin } from 'react-icons/fa6'
 import { href } from '../lib/router'
 import { getLang, stripLang, withLang, tr } from '../i18n'
 
@@ -148,7 +149,7 @@ export function Footer() {
             <Logo footer />
             <p style={{ maxWidth: '38ch' }}>{company.shortDescription.value}</p>
             {socials.length > 0 ? (
-              <ul style={{ display: 'flex', gap: 16 }}>{socials.map(([k, v]) => <li key={k}><a href={v} target="_blank" rel="noopener noreferrer" style={{ textTransform: 'capitalize' }}>{k}</a></li>)}</ul>
+              <ul className="footer__social">{socials.map(([k, v]) => <li key={k}><a href={v} target="_blank" rel="noopener noreferrer" aria-label={`ASEC Automation on ${k === 'linkedin' ? 'LinkedIn' : k}`}>{k === 'linkedin' ? <><FaLinkedin aria-hidden /> Follow us on LinkedIn</> : k}</a></li>)}</ul>
             ) : <p style={{ fontSize: 13, color: 'var(--steel)' }}>{company.socialHandles}</p>}
           </div>
           <div>
