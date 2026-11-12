@@ -325,11 +325,11 @@ export function Careers() {
               text="Approved vacancies will be listed here with full job details. You can still send us your CV below as an open application." />
           ) : (
             <div style={{ display: 'grid', gap: 14 }}>{list.map((j) => (
-              <details key={j.slug} className="panel" style={{ padding: 26 }}>
-                <summary style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}><strong className="h3">{j.title}</strong><span className="muted">{j.department} · {j.location} · {j.type}</span></summary>
-                <div style={{ display: 'grid', gap: 16, marginTop: 18 }}>
-                  <p>{j.summary}</p>
-                  <div className="grid grid-2"><div><h4>Responsibilities</h4><ul className="ticks">{j.responsibilities.map((r) => <li key={r}>{r}</li>)}</ul></div><div><h4>Requirements</h4><ul className="ticks">{j.requirements.map((r) => <li key={r}>{r}</li>)}</ul></div></div>
+              <details key={j.slug} className="job-tab">
+                <summary className="job-tab__head"><span className="job-tab__title"><strong className="h3" dir="auto">{j.title}</strong><span className="job-tab__meta" dir="auto">{[j.department, j.location, j.type].filter(Boolean).join(' · ')}</span></span><span className="job-tab__chev" aria-hidden>+</span></summary>
+                <div className="job-tab__body">
+                  <p dir="auto">{j.summary}</p>
+                  <div className="grid grid-2"><div><h4>Responsibilities</h4><ul className="ticks">{j.responsibilities.map((r) => <li key={r} dir="auto">{r}</li>)}</ul></div><div><h4>Requirements</h4><ul className="ticks">{j.requirements.map((r) => <li key={r} dir="auto">{r}</li>)}</ul></div></div>
                   <div><button type="button" className="btn btn--blue" onClick={() => { window.dispatchEvent(new CustomEvent('apply-position', { detail: j.title })); document.getElementById('apply')?.scrollIntoView({ behavior: 'smooth' }) }}>Apply for this role <Arrow /></button></div>
                 </div>
               </details>
