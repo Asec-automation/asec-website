@@ -146,7 +146,7 @@ export function CTASection({
       <div className="hero__bg"><Img id="CTA_BG_01" /></div>
       <div className="container cta__inner">
         <span className="eyebrow" style={{ color: 'var(--cyan)' }}>Start a conversation</span>
-        <h2 id="cta-title" className="display" style={{ maxWidth: '13ch' }}>{title}</h2>
+        <h2 id="cta-title" className="cta__title" style={{ maxWidth: '14ch' }}>{title}</h2>
         <p className="lead" style={{ color: 'rgba(255,255,255,.75)' }}>{text}</p>
         <div className="btn-row">
           <Link to="/contact" className="btn btn--primary">Contact Us <Arrow /></Link>
