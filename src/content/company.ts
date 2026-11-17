@@ -68,7 +68,9 @@ export const company = {
   whatsapp: '201065648082', // +20 106 564 8082 — digits only, used for the WhatsApp chat button
   /** Public site URL, used for canonical links and the sitemap. */
   /** Public web address. Change to 'https://www.asecautomation.com' when the domain is connected. */
-  siteUrl: 'https://asec-website.sara-sabry.workers.dev',
+  siteUrl: 'https://www.asecautomation.com',
+  /** Where the careers/inbox API runs (Cloudflare Worker). Pages hosted elsewhere (GitHub Pages) call it here. */
+  apiBase: 'https://asec-website.sara-sabry.workers.dev',
   /**
    * Visitor tracking & Google.
    *  - cloudflareAnalyticsToken: Cloudflare → Analytics & Logs → Web Analytics → Add a site → copy the "token" from the snippet.

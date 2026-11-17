@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { LuDownload, LuTrash2, LuMail, LuMailOpen, LuRefreshCw, LuFileText, LuBriefcase, LuMessageSquare, LuBell } from 'react-icons/lu'
-import { INBOX_API } from '../content/live-jobs'
+import { INBOX_API, API_BASE } from '../content/live-jobs'
 
 type Kind = 'application' | 'contact' | 'alert'
 interface Summary { id: string; kind: Kind; at: number; read: boolean; name: string; email: string; title: string; cv?: { name: string; size: number } }
@@ -73,8 +73,9 @@ export function AdminInbox({ token, demo, onSignOut, onCount }: { token: string;
       const d = await r.json().catch(() => ({}))
       if (r.status === 401) { tab?.close(); onSignOut(); return }
       if (!r.ok || !d.url) throw new Error()
-      if (tab) tab.location.href = d.url
-      else { const a = document.createElement('a'); a.href = d.url; a.download = it.cv?.name || 'cv'; document.body.appendChild(a); a.click(); a.remove() }
+      const link = API_BASE + d.url
+      if (tab) tab.location.href = link
+      else { const a = document.createElement('a'); a.href = link; a.download = it.cv?.name || 'cv'; document.body.appendChild(a); a.click(); a.remove() }
     } catch { tab?.close(); window.alert('The CV could not be opened. Please try again.') }
   }
 

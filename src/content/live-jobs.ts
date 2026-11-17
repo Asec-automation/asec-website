@@ -1,12 +1,15 @@
+import { company } from './company'
 import { useEffect, useState } from 'react'
 import { jobs as builtInJobs, type Job } from './catalogue'
 
 declare const __ROUTER_MODE__: 'history' | 'hash'
 /** The careers API exists only on the hosted site (Cloudflare Pages), not in the single-file preview. */
 export const API_AVAILABLE = typeof __ROUTER_MODE__ === 'undefined' || __ROUTER_MODE__ === 'history'
-export const CAREERS_API = '/api/careers'
+/** Same-origin on the Cloudflare Worker; the full Worker address when the pages are hosted elsewhere (e.g. www.asecautomation.com on GitHub Pages). */
+export const API_BASE = typeof location === 'undefined' || /workers\.dev$|^localhost$|^127\.0\.0\.1$/.test(location.hostname) ? '' : company.apiBase
+export const CAREERS_API = API_BASE + '/api/careers'
 /** Website inbox: stores contact messages, applications (with CV) and job alerts on the site itself. */
-export const INBOX_API = '/api/inbox'
+export const INBOX_API = API_BASE + '/api/inbox'
 
 export interface EditableJob extends Job { show?: boolean }
 

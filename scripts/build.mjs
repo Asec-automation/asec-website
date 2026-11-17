@@ -140,6 +140,19 @@ if (SINGLE) {
   const pub = indexable
   fs.writeFileSync(path.join(out, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${pub.map((p) => `  <url><loc>${siteUrl}${p}</loc></url>`).join('\n')}\n</urlset>\n`)
   fs.writeFileSync(path.join(out, 'robots.txt'), `User-agent: *\nAllow: /\nDisallow: /careers/admin\nDisallow: /api/\nSitemap: ${siteUrl}/sitemap.xml\n`)
+  // GitHub Pages: custom domain + no Jekyll processing
+  fs.writeFileSync(path.join(out, 'CNAME'), new URL(siteUrl).hostname + '\n')
+  fs.writeFileSync(path.join(out, '.nojekyll'), '')
+  // Old addresses from the previous website → new pages (static hosts have no server redirects)
+  const OLD = { expertise: '/', solutions: '/', industries: '/', innovation: '/', sustainability: '/', news: '/', insights: '/',
+    career: '/careers/', 'partners-technologies': '/partners/', technologies: '/partners/', technology: '/partners/',
+    'contact-us': '/contact/', contactus: '/contact/', 'about-us': '/about/', aboutus: '/about/' }
+  for (const [from, to] of Object.entries(OLD)) {
+    const dir = path.join(out, from)
+    if (fs.existsSync(path.join(dir, 'index.html'))) continue
+    fs.mkdirSync(dir, { recursive: true })
+    fs.writeFileSync(path.join(dir, 'index.html'), `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Moved</title><meta name="robots" content="noindex"><link rel="canonical" href="${siteUrl}${to}"><meta http-equiv="refresh" content="0; url=${to}"></head><body><a href="${to}">Continue</a></body></html>`)
+  }
   console.log(`prerendered ${paths.length} pages → dist/`)
   // list every English UI string, and which ones still lack an Arabic translation
   const ar = JSON.parse(fs.readFileSync(path.join(root, 'src/i18n/ar.json'), 'utf8'))
