@@ -2,7 +2,7 @@
   "name": "asec-automation-site",
   "private": true,
   "version": "0.1.0",
-  "description": "ASEC Automation corporate website — static, free-hostable edition (React + TypeScript, prerendered).",
+  "description": "ASEC Automation company website — www.asecautomation.com (React + TypeScript, prerendered, English and Arabic).",
   "type": "module",
   "scripts": {
     "dev": "node scripts/dev.mjs",

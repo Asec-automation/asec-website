@@ -1,138 +1,96 @@
-# ASEC Automation — Corporate Website (free static edition)
+# ASEC Automation — Company Website
 
-A fast, prerendered React + TypeScript website you can host **for free** on Cloudflare Pages, Netlify,
-Cloudflare Pages or GitHub Pages. No server, database or paid hosting is needed.
+Live at **https://www.asecautomation.com** (launched 18 November 2026).
 
-> This is the **static edition** of the master specification. It covers the full public
-> website. The admin dashboard/CMS, database and server-side features from the master prompt
-> need paid hosting and are **not** included — see `PROJECT_STATUS.md`.
+A fast, prerendered React + TypeScript website in English and Arabic. Pages are hosted free on
+**GitHub Pages**. The careers and contact system (jobs, applications with CVs, contact messages, job alerts)
+runs on a **Cloudflare Worker**.
 
-## Requirements
-- [Node.js](https://nodejs.org) 20 or newer (LTS). Works on Windows, macOS and Linux.
+```
+Visitor ─▶ DNS (Vodafone) ─▶ GitHub Pages  (website files, HTTPS)
+                                   │ forms
+                                   ▼
+                       Cloudflare Worker "asec-website"  (careers + inbox API, KV storage)
+```
 
-## Quick start
+## How to update the website
+1. Edit files in `src/` (see the table below).
+2. Commit and push to `main`.
+3. GitHub Actions (`.github/workflows/pages.yml`) builds the site and publishes it in about a minute.
+   You can follow it in the repo's **Actions** tab.
+
+Job openings don't need a code change. HR adds, edits and deletes them at
+**https://www.asecautomation.com/careers/admin/**, which also holds the inbox.
+
+## Run it on your computer
+Needs [Node.js](https://nodejs.org) 20 or newer.
 ```bash
 npm install          # once
+npm run dev          # http://localhost:5173 — rebuilds and reloads when you save
 npm run build        # builds the site into dist/
-npm run serve        # preview at http://localhost:4173
+npm run serve        # preview dist/ at http://localhost:4173
 ```
-Edit files in `src/`, run `npm run build` again, and refresh.
-
-## Deploy for free
-The `dist/` folder is a complete static website (one prerendered HTML file per page).
-
-**Cloudflare Pages** — import the GitHub repo → Framework preset: *Other* → Build command `npm run build`
-→ Output directory `dist`. (`vercel.json` is included.)
-
-**Netlify** — New site from Git → Build command `npm run build` → Publish directory `dist`.
-(`netlify.toml` is included.)
-
-**Cloudflare Pages** — Build command `npm run build`, output `dist`.
-
-**GitHub Pages** — run `npm run build` and publish `dist/` (e.g. with the
-`actions/upload-pages-artifact` action). Use a custom domain or root repository so links resolve from `/`.
-
-After choosing a domain, set `siteUrl` in `src/content/company.ts` (used for canonical URLs and the sitemap).
 
 ## Where to edit things
 | What | File |
 |---|---|
-| Company name, tagline, contact details, social links, form endpoint | `src/content/company.ts` |
-| Expertise / service pages | `src/content/expertise.ts` |
-| Solutions, industries, countries, projects, partners, articles, jobs, leadership, values | `src/content/catalogue.ts` |
-| Cement process areas (interactive diagram) | `src/content/cement.ts` |
-| Image slots (IDs, sizes, file paths) | `src/config/images.ts` |
-| Colours, fonts, spacing (design system) | `src/styles.css` (`:root` variables) |
-| Navigation menu | `src/components/Layout.tsx` (`NAV`) |
-| Page titles & meta descriptions | `src/routes.tsx` |
+| Company details, phone, WhatsApp, LinkedIn, addresses, site URL, API address | `src/content/company.ts` |
+| Services / expertise pages | `src/content/expertise.ts` |
+| Projects | `src/content/my-projects.ts`, `src/content/projects-extra.ts`, `projects` in `src/content/catalogue.ts` |
+| Partners, industries, solutions, countries, leadership, values | `src/content/catalogue.ts` |
+| Certificates | `src/content/company.ts` |
+| Software and tools | `src/content/software.ts` |
+| Cement process areas | `src/content/cement.ts` |
+| Arabic translations (keyed by the English text) | `src/i18n/ar.json` |
+| Page titles and descriptions | `src/routes.tsx` |
+| Colours, fonts, spacing | `src/styles.css` |
+| Images | `public/images/` (see `IMAGE_REQUIREMENTS.md`) |
+| Company profile PDF | `public/docs/asec-automation-company-profile-2025.pdf` |
 
-Every piece of content has an approval status (`confirmed`, `proposed`, `missing`).
-While `REVIEW_MODE = true` (in `company.ts`) the site shows draft badges and image-slot labels so reviewers
-can see what still needs approval. **Set `REVIEW_MODE = false` before going live** — unpublished countries,
-placeholder leadership cards and review notes are then hidden.
+Use official brand files only. Don't recreate, stretch or recolour the logos.
 
-## Images
-All images are placeholders until you add your photos. See **`IMAGE_REQUIREMENTS.md`** for every slot,
-its size and its exact file path. Drop a file at that path in `public/`, rebuild, done — no code changes.
-Replace the logo by adding `public/images/brand/logo-light.png` (or `.svg`).
-Run `npm run images` to refresh the checklist and see which slots are filled.
+## Arabic
+Every page has an Arabic version under `/ar/` (right-to-left). The build translates text using
+`src/i18n/ar.json`. When you add or change English text, add its Arabic line there. The build prints how many
+strings are translated. Untranslated ones are mostly brand and product names.
 
-## Contact form
-Static sites can't send email by themselves. Create a free form endpoint (e.g. Formspree, Basin or Getform),
-paste its URL into `formEndpoint` in `src/content/company.ts`, and rebuild. Until then the form validates input
-and tells visitors clearly that online submission isn't connected — it never pretends a message was sent.
+## Careers and contact system (Cloudflare)
+| Part | Where |
+|---|---|
+| Worker code | `worker/index.js`, `functions/api/careers.js`, `functions/api/inbox.js` |
+| Settings | `wrangler.jsonc` (Worker name `asec-website`, KV namespace `CAREERS_KV`) |
+| Address | `https://asec-website.sara-sabry.workers.dev` (`apiBase` in `company.ts`) |
 
-## Adding content
-- **Project:** add an object to `projects` in `catalogue.ts` (set `clientVisible: true` only with client permission; `featured: true` to show on the homepage).
-- **Article:** add to `articles`. **Job:** add to `jobs` (with an `applyEmail`). **Partner:** add to `partners` with its category and a `PARTNER_LOGO_xx` image.
-- **Country relationship:** in `countries`, set `relationship` (e.g. `'Office'`) and `published: true` once approved.
+- It only accepts calls from `https://www.asecautomation.com`, `https://asecautomation.com` and
+  `https://asec-automation.github.io`.
+- The admin password and token key are **Cloudflare secrets** (`CAREERS_ADMIN_PASSWORD`, `CAREERS_TOKEN_SECRET`).
+  Never put them in this repo. This repo is public.
+- To deploy Worker changes: `npx wrangler deploy` (signed in to the company Cloudflare account).
+
+## DNS (at Vodafone, SolidCP panel)
+| Name | Type | Value |
+|---|---|---|
+| (empty / @) | A | 185.199.108.153 |
+| www | CNAME | asec-automation.github.io |
+
+Keep the MX, TXT (SPF, google-site-verification), autodiscover, sip and Teams records as they are, because company email depends on them.
+
+## Security
+- HTTPS is enforced in GitHub Pages settings.
+- Every page carries a Content-Security-Policy and a referrer policy (built in `scripts/build.mjs`). If you add
+  a new outside service (a font, script, embed or form), add its address to the `CSP` list there, or it will be blocked.
+- Admin sign-ins expire after 8 hours, and repeated attempts are rate-limited. CV links are signed and expire after 10 minutes.
+- No passwords, keys or tokens belong in this repo.
 
 ## Scripts
 | Command | Does |
 |---|---|
-| `npm run build` | Detect images, bundle, prerender all pages to `dist/` |
+| `npm run dev` | Build, serve and reload on every save |
+| `npm run build` | Build and prerender all pages (English + Arabic) to `dist/` |
 | `npm run serve` | Serve `dist/` locally |
 | `npm run images` | Regenerate `IMAGE_REQUIREMENTS.md` |
-| `npm run build:preview` | One self-contained HTML file in `preview/` (for quick sharing; uses `#/` URLs) |
+| `npm run build:preview` | One self-contained HTML file in `preview/` for quick sharing |
 
 ## Tech
-React 19 + TypeScript, bundled with esbuild, prerendered to static HTML at build time (good for SEO),
-hand-written CSS design system, `react-icons` (Lucide set). No tracking, no cookies.
-
-## Hosting — Cloudflare Pages (free, commercial use allowed)
-
-1. Sign in at **dash.cloudflare.com** → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**.
-2. Choose the **Asec-automation/asec-website** repository.
-3. Build settings: **Framework preset** None · **Build command** `npm run build` · **Build output directory** `dist`.
-4. **Save and Deploy**. Every push to `main` redeploys automatically.
-5. Custom domain: project → **Custom domains** → add `asecautomation.com` and follow the DNS steps.
-
-### If the project was created as a Cloudflare **Worker** (address ends in `.workers.dev`)
-`wrangler.jsonc` and `worker/index.js` set this up: the Worker serves `dist/` and the Careers API.
-Build command `npm run build`, deploy command `npx wrangler deploy`. The KV binding must be written
-in `wrangler.jsonc` (`kv_namespaces`), because bindings added only in the dashboard are replaced on each deploy.
-Secrets (`CAREERS_ADMIN_PASSWORD`, `CAREERS_TOKEN_SECRET`) are set in the dashboard and are kept.
-
-## Careers admin (HR login)
-
-HR manages job openings at **/careers/admin** (not linked from the menu, hidden from search engines).
-They sign in with a password, then add, edit, hide, reorder or delete jobs, or import/export the list
-as an Excel-compatible CSV. Saved changes appear on the Careers page immediately.
-The server code is `functions/api/careers.js` (a Cloudflare Pages Function).
-
-One-time setup in Cloudflare:
-1. **Storage** — Workers & Pages → **KV** → **Create a namespace** (name it e.g. `asec-careers`).
-2. Your Pages project → **Settings → Bindings** → **Add** → **KV namespace**:
-   variable name `CAREERS_KV`, namespace `asec-careers`.
-3. **Settings → Variables and Secrets** → add two **Secrets**:
-   - `CAREERS_ADMIN_PASSWORD` = the password for HR (12+ characters)
-   - `CAREERS_TOKEN_SECRET` = any long random text (e.g. 40 random characters)
-4. **Deployments** → **Retry deployment** (or push any change) so the settings take effect.
-
-Change the HR password any time by editing `CAREERS_ADMIN_PASSWORD` and redeploying.
-Sessions last 8 hours; after 10 wrong passwords an address is blocked for 15 minutes.
-
-## Job applications (CVs)
-
-The Careers form emails each application, with the CV attached, to **careers@asecautomation.com**
-via FormSubmit (formsubmit.co). After the site is live, send one test application: FormSubmit
-emails careers@ an **Activate** link — click it once, and all later applications arrive normally.
-
-## Adding new photos
-After adding large photos to `public/images/`, run `python3 scripts/make_small_images.py`.
-It creates 800px phone copies (`name-800.webp`) and the site serves them to small screens automatically.
-
-## Company profile & certificates
-- Profile: put the approved PDF in `public/docs/` and set `profilePdf` in `src/content/company.ts`.
-- Certificates: put scans in `public/docs/certificates/` and fill `certificateFiles` in the same file.
-
-## Website inbox (applications, CVs, messages)
-Every job application (with CV), contact message and job-alert sign-up is saved in Cloudflare KV
-(the same `CAREERS_KV` namespace) by `functions/api/inbox.js`. HR reads them at `/careers/admin` → **Inbox**:
-download CVs, reply by email, mark read, delete. Email copies are also sent through FormSubmit (best effort).
-
-### Optional: email copies from your own domain (after asecautomation.com is on Cloudflare)
-1. Cloudflare → asecautomation.com → **Email** → **Email Routing** → enable, and verify contact@ and careers@ as destination addresses.
-2. Add to `wrangler.jsonc`:
-   `"send_email": [{ "name": "INBOX_EMAIL" }]`
-3. Worker → Settings → Variables: `INBOX_FROM` = `website@asecautomation.com`, `INBOX_TO_CONTACT` = `contact@asecautomation.com`, `INBOX_TO_CAREERS` = `careers@asecautomation.com`.
+React 19 + TypeScript, bundled with esbuild, prerendered to static HTML at build time (good for SEO).
+Custom i18n JSX runtime for Arabic. Hand-written CSS. Cloudflare Worker + KV for the careers and inbox API.
