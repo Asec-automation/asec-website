@@ -2,9 +2,9 @@
 import { build } from 'esbuild'
 import fs from 'node:fs'
 import path from 'node:path'
-import { pathToFileURL } from 'node:url'
+import { pathToFileURL, fileURLToPath } from 'node:url'
 
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..')
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const tmp = path.join(root, '.tmp-images.mjs')
 await build({ entryPoints: [path.join(root, 'src/config/images.ts')], outfile: tmp, bundle: true, format: 'esm', platform: 'node', logLevel: 'error' })
 const { IMAGE_SLOTS, aspect } = await import(pathToFileURL(tmp).href)

@@ -2,8 +2,9 @@
 import http from 'node:http'
 import fs from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const dist = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../dist')
+const dist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../dist')
 const port = Number(process.env.PORT) || 4173
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.avif': 'image/avif', '.xml': 'application/xml', '.txt': 'text/plain' }
 

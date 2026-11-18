@@ -5,6 +5,7 @@
   "description": "ASEC Automation corporate website — static, free-hostable edition (React + TypeScript, prerendered).",
   "type": "module",
   "scripts": {
+    "dev": "node scripts/dev.mjs",
     "build": "node scripts/build.mjs",
     "build:preview": "node scripts/build.mjs --hash --single",
     "images": "node scripts/image-manifest.mjs",
