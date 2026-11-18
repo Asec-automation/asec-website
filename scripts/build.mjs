@@ -60,6 +60,21 @@ const { render, paths, indexable, seenStrings } = await import(pathToFileURL(ssr
 
 const company = fs.readFileSync(path.join(root, 'src/content/company.ts'), 'utf8')
 const siteUrl = (company.match(/siteUrl:\s*'([^']+)'/) || [])[1] || ''
+// Content-Security-Policy: only our own files plus the few outside services the site really uses.
+const apiOrigin = (company.match(/apiBase:\s*'([^']+)'/) || [])[1] || ''
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self' https://static.cloudflareinsights.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https:",
+  `connect-src 'self' ${apiOrigin} https://formsubmit.co https://cloudflareinsights.com`,
+  "frame-src https://maps.google.com https://www.google.com https://formsubmit.co",
+  "form-action 'self' https://formsubmit.co",
+  "base-uri 'self'",
+  "object-src 'none'",
+  'upgrade-insecure-requests',
+].join('; ')
 const cfToken = (company.match(/cloudflareAnalyticsToken:\s*'([^']*)'/) || [])[1] || ''
 const gVerify = (company.match(/googleSiteVerification:\s*'([^']*)'/) || [])[1] || ''
 const orgLd = {
@@ -96,6 +111,8 @@ ${!SINGLE && p !== '/404' ? `<meta property="og:url" content="${siteUrl}${p}" />
 ${ogImg ? `<meta property="og:image" content="${ogImg}" /><meta name="twitter:image" content="${ogImg}" />` : ''}
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="theme-color" content="#040F47" />
+${SINGLE ? '' : `<meta http-equiv="Content-Security-Policy" content="${CSP}" />`}
+<meta name="referrer" content="strict-origin-when-cross-origin" />
 <link rel="icon" type="image/png" href="/favicon.png" />
 <link rel="apple-touch-icon" href="/images/brand/apple-touch-icon.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
