@@ -1,9 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { LuDownload, LuTrash2, LuMail, LuMailOpen, LuRefreshCw, LuFileText, LuBriefcase, LuMessageSquare, LuBell, LuSearch, LuX } from 'react-icons/lu'
 import { INBOX_API, API_BASE } from '../content/live-jobs'
+import { ReplyTemplates, fmtDate, fmtTime, type Stage, type Interview } from '../components/ReplyTemplates'
+import { InterviewCalendar } from '../components/InterviewCalendar'
 
 type Kind = 'application' | 'contact' | 'alert'
-interface Summary { id: string; kind: Kind; at: number; read: boolean; name: string; email: string; title: string; cv?: { name: string; size: number } }
+interface Summary { id: string; kind: Kind; at: number; read: boolean; name: string; email: string; title: string; cv?: { name: string; size: number }; stage?: Stage; interview?: Interview }
+const STAGE_LABEL: Record<Stage, string> = { new: 'Inbox', interview: 'Interviews', accepted: 'Accepted', rejected: 'Not accepted' }
 interface Full extends Summary { phone?: string; company?: string; country?: string; category?: string; department?: string; position?: string; subject?: string; area?: string; message?: string }
 
 const KIND: Record<Kind, { label: string; icon: React.ReactNode }> = {
@@ -15,8 +18,10 @@ const when = (t: number) => new Date(t).toLocaleString(undefined, { day: 'numeri
 const mb = (n: number) => `${(n / 1024 / 1024).toFixed(2)} MB`
 
 /** The website inbox: every application (with CV), contact message and job-alert sign-up. */
-export function AdminInbox({ token, demo, onSignOut, onCount, kinds = ['application', 'contact', 'alert'] }: { token: string; demo: boolean; onSignOut: () => void; onCount: (n: number) => void; kinds?: Kind[] }) {
-  const keep = (l: Summary[]) => l.filter((i) => kinds.includes(i.kind))
+export function AdminInbox({ token, demo, onSignOut, onCount, kinds = ['application', 'contact', 'alert'], stages, active = true, calendar = false }: { token: string; demo: boolean; onSignOut: () => void; onCount: (n: number) => void; kinds?: Kind[]; stages?: Stage[]; active?: boolean; calendar?: boolean }) {
+  const fits = (i: Summary) => kinds.includes(i.kind) && (i.kind !== 'application' || !stages || stages.includes(i.stage || 'new'))
+  const keep = (l: Summary[]) => l.filter(fits)
+  const [day, setDay] = useState('')
   const business = kinds.length === 1 && kinds[0] === 'contact'
   const [items, setItems] = useState<Summary[]>([])
   const [loading, setLoading] = useState(!demo)
@@ -34,6 +39,7 @@ export function AdminInbox({ token, demo, onSignOut, onCount, kinds = ['applicat
         { id: 'd1', kind: 'application', at: Date.now() - 3600e3, read: false, name: 'Ahmed Hassan', email: 'ahmed@example.com', title: 'Senior PLC Engineer', cv: { name: 'Ahmed-Hassan-CV.pdf', size: 412000 } },
         { id: 'd2', kind: 'contact', at: Date.now() - 86400e3, read: true, name: 'Mona Adel', email: 'mona@example.com', title: 'MCC upgrade for a cement plant' },
         { id: 'd3', kind: 'alert', at: Date.now() - 2 * 86400e3, read: true, name: '', email: 'candidate@example.com', title: 'Automation & control' },
+        { id: 'd4', kind: 'application', at: Date.now() - 3 * 86400e3, read: true, name: 'Sample Candidate', email: 'sample@example.com', title: 'Mechanical Tendering Engineer', stage: 'interview', interview: { date: new Date(Date.now() + 2 * 86400e3).toISOString().slice(0, 10), time: '11:00', interviewer: 'Eng. Interviewer' } },
       ])); return
     }
     setLoading(true); setErr('')
@@ -42,7 +48,7 @@ export function AdminInbox({ token, demo, onSignOut, onCount, kinds = ['applicat
       .catch((x) => setErr((x as Error).message || 'Couldn’t load the inbox.'))
       .finally(() => setLoading(false))
   }
-  useEffect(load, [token, demo])
+  useEffect(() => { if (active) load() }, [token, demo, active])
   useEffect(() => { onCount(items.filter((i) => !i.read).length) }, [items])
 
   /** Job titles people applied for, with counts, so HR can see everyone who applied to one role. */
@@ -58,10 +64,20 @@ export function AdminInbox({ token, demo, onSignOut, onCount, kinds = ['applicat
       if (filter !== 'all' && i.kind !== filter) return false
       if (position && (i.kind !== 'application' || (i.title || 'Open application').trim() !== position)) return false
       if (!words.length) return true
-      const hay = norm(`${i.title} ${i.name} ${i.email} ${KIND[i.kind].label}`)
+      const hay = norm(`${i.title} ${i.name} ${i.email} ${KIND[i.kind].label} ${i.interview?.interviewer || ''}`)
       return words.every((w) => hay.includes(w))
-    })
-  }, [items, filter, q, position])
+    }).filter((i) => !day || i.interview?.date === day)
+      .sort((a, b) => calendar ? `${a.interview?.date}${a.interview?.time}`.localeCompare(`${b.interview?.date}${b.interview?.time}`) : 0)
+  }, [items, filter, q, position, day, calendar])
+  const calItems = useMemo(() => items.filter((i) => i.interview?.date).map((i) => ({ id: i.id, name: i.name || i.email, title: i.title, date: i.interview!.date, time: i.interview!.time, interviewer: i.interview!.interviewer })), [items])
+
+  /** Move an application between Inbox / Interviews / Accepted / Not accepted (saved on the server). */
+  const setStage = async (it: Summary, stage: Stage, interview?: Interview) => {
+    const next = { ...it, stage, ...(interview ? { interview } : {}) }
+    setItems((l) => (fits(next) ? l.map((i) => (i.id === it.id ? next : i)) : l.filter((i) => i.id !== it.id)))
+    if (!fits(next)) setOpen(null)
+    if (!demo) await fetch(`${INBOX_API}?id=${encodeURIComponent(it.id)}`, { method: 'PATCH', headers: { ...auth, 'Content-Type': 'application/json' }, body: JSON.stringify(interview ? { stage, interview } : { stage }) }).catch(() => {})
+  }
   const pickPosition = (t: string) => { setPosition((p) => (p === t ? '' : t)); setFilter('application') }
   const count = (k: Kind) => items.filter((i) => i.kind === k).length
 
@@ -126,11 +142,13 @@ export function AdminInbox({ token, demo, onSignOut, onCount, kinds = ['applicat
           ))}
         </div>
       )}
+      {calendar && <InterviewCalendar items={calItems} day={day} onDay={setDay} />}
+      {day && <p className="ib__result">Interviews on {fmtDate(day)} · <button type="button" className="ib__link" onClick={() => setDay('')}>show all</button></p>}
       {(q || position) && !loading && <p className="ib__result">{shown.length} {shown.length === 1 ? 'result' : 'results'}{position ? ` for “${position}”` : ''}{q ? ` matching “${q}”` : ''}</p>}
       {err && <p className="ca-msg ca-msg--err">{err}</p>}
       {loading ? <p className="muted">Loading inbox…</p> : shown.length === 0 ? (
         (q || position) && items.length ? <div className="ca-empty"><h2>No matches</h2><p>Nothing matches your search. Try another job title or clear the search.</p></div>
-        : <div className="ca-empty"><h2>Nothing here yet</h2><p>{business ? 'Messages sent through the Contact Us form (quotes, site visits, partnership and service questions) appear here.' : 'New job applications and job-alert sign-ups from the website appear here.'}</p></div>
+        : <div className="ca-empty"><h2>Nothing here yet</h2><p>{business ? 'Messages sent through the Contact Us form (quotes, site visits, partnership and service questions) appear here.' : stages && !stages.includes('new') ? `Applications moved to ${stages.map((x) => STAGE_LABEL[x]).join(' / ')} appear here.` : 'New job applications and job-alert sign-ups from the website appear here.'}</p></div>
       ) : (
         <ul className="ib__list">
           {shown.map((it) => {
@@ -139,7 +157,7 @@ export function AdminInbox({ token, demo, onSignOut, onCount, kinds = ['applicat
               <li key={it.id} className={`ib__item ${it.read ? '' : 'is-new'}`}>
                 <button type="button" className="ib__row" onClick={() => toggle(it)} aria-expanded={isOpen}>
                   <span className={`ib__kind ib__kind--${it.kind}`}>{KIND[it.kind].icon}</span>
-                  <span className="ib__main"><strong>{it.name || it.email}</strong><span>{KIND[it.kind].label}{it.title ? ` · ${it.title}` : ''}</span></span>
+                  <span className="ib__main"><strong>{it.name || it.email}</strong><span>{KIND[it.kind].label}{it.title ? ` · ${it.title}` : ''}</span>{it.interview && it.stage === 'interview' && <span className="ib__iv">Interview · {fmtDate(it.interview.date)}, {fmtTime(it.interview.time)} · {it.interview.interviewer}</span>}</span>
                   {it.cv && <span className="ib__cv"><LuFileText aria-hidden /> CV</span>}
                   <time className="ib__time">{when(it.at)}</time>
                 </button>
@@ -157,9 +175,17 @@ export function AdminInbox({ token, demo, onSignOut, onCount, kinds = ['applicat
                       {f?.subject && <><dt>Subject</dt><dd>{f.subject}</dd></>}
                       {f?.area && <><dt>Interested in</dt><dd>{f.area}</dd></>}
                       <dt>Received</dt><dd>{when(it.at)}</dd>
+                      {it.kind === 'application' && <><dt>Status</dt><dd>{STAGE_LABEL[it.stage || 'new']}</dd></>}
+                      {it.interview && <><dt>Interview</dt><dd>{fmtDate(it.interview.date)}, {fmtTime(it.interview.time)} · {it.interview.interviewer}</dd></>}
                     </dl>
                     {f?.message && <div className="ib__msg">{f.message}</div>}
                     {!f && <p className="muted">Loading…</p>}
+                    {it.kind === 'application' && <ReplyTemplates name={f?.name || it.name} email={it.email} position={f?.position || it.title} interview={it.interview} onSchedule={(iv) => setStage(it, 'interview', iv)} onMove={(st) => setStage(it, st)} />}
+                    {it.kind === 'application' && (
+                      <div className="ib__move"><span>Move to:</span>{(['new', 'interview', 'accepted', 'rejected'] as Stage[]).map((st) => (
+                        <button key={st} type="button" className={(it.stage || 'new') === st ? 'is-on' : ''} disabled={(it.stage || 'new') === st} onClick={() => setStage(it, st)}>{STAGE_LABEL[st]}</button>
+                      ))}</div>
+                    )}
                     <div className="ib__actions">
                       {it.cv && <button type="button" className="btn btn--blue" onClick={() => openCv(it, 'view')}><LuFileText aria-hidden /> Open CV</button>}
                       {it.cv && <button type="button" className="btn btn--outline" onClick={() => openCv(it, 'download')}><LuDownload aria-hidden /> Download CV <small>({it.cv.name} · {mb(it.cv.size)})</small></button>}

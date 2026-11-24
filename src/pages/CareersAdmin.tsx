@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { LuLock, LuLogOut, LuPlus, LuTrash2, LuEye, LuEyeOff, LuArrowUp, LuArrowDown, LuUpload, LuDownload, LuSave, LuCircleCheck, LuTriangleAlert, LuInbox, LuBriefcase, LuHandshake } from 'react-icons/lu'
+import { LuLock, LuLogOut, LuPlus, LuTrash2, LuEye, LuEyeOff, LuArrowUp, LuArrowDown, LuUpload, LuDownload, LuSave, LuCircleCheck, LuTriangleAlert, LuInbox, LuBriefcase, LuHandshake, LuCalendarDays, LuUserCheck, LuUserX } from 'react-icons/lu'
 import { AdminInbox } from './AdminInbox'
 import { Link } from '../lib/router'
 import { API_AVAILABLE, CAREERS_API, csvToJobs, jobsToCsv, slugify, type EditableJob } from '../content/live-jobs'
@@ -29,30 +29,51 @@ export default function CareersAdmin() {
 }
 
 function Workspace({ token, demo, onSignOut }: { token: string; demo: boolean; onSignOut: () => void }) {
-  const [tab, setTab] = useState<'jobs' | 'inbox' | 'business'>(() => { try { return location.hash.includes('inbox') ? 'inbox' : location.hash.includes('business') ? 'business' : 'jobs' } catch { return 'jobs' } })
+  type Tab = 'jobs' | 'inbox' | 'interviews' | 'accepted' | 'rejected' | 'business'
+  const [tab, setTab] = useState<Tab>(() => { try { const h = location.hash.slice(1) as Tab; return (['inbox', 'interviews', 'accepted', 'rejected', 'business'] as string[]).includes(h) ? h : 'jobs' } catch { return 'jobs' } })
   const [unread, setUnread] = useState(0)
   const [unreadBiz, setUnreadBiz] = useState(0)
+  const noop = () => {}
+  const T = (k: Tab, icon: React.ReactNode, label: string, badge = 0) => (
+    <button type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'is-on' : ''} onClick={() => setTab(k)}>{icon} {label}{badge > 0 && <span className="ca-tabs__n">{badge} new</span>}</button>
+  )
+  const Head = ({ title, text }: { title: string; text: string }) => (
+    <div className="ca-ed__head" style={{ marginBottom: 18 }}>
+      <div><h1>{title}{demo && <span className="ca-tag">Demo</span>}</h1><p>{text}</p></div>
+      <div className="ca-ed__actions"><button type="button" className="ca-btn" onClick={onSignOut}><LuLogOut aria-hidden /> Sign out</button></div>
+    </div>
+  )
+  const common = { token, demo, onSignOut }
   return (
     <>
       <div className="ca-tabs" role="tablist" aria-label="Careers admin sections">
-        <button type="button" role="tab" aria-selected={tab === 'jobs'} className={tab === 'jobs' ? 'is-on' : ''} onClick={() => setTab('jobs')}><LuBriefcase aria-hidden /> Job openings</button>
-        <button type="button" role="tab" aria-selected={tab === 'inbox'} className={tab === 'inbox' ? 'is-on' : ''} onClick={() => setTab('inbox')}><LuInbox aria-hidden /> Inbox{unread > 0 && <span className="ca-tabs__n">{unread} new</span>}</button>
-        <button type="button" role="tab" aria-selected={tab === 'business'} className={tab === 'business' ? 'is-on' : ''} onClick={() => setTab('business')}><LuHandshake aria-hidden /> Business inquiries{unreadBiz > 0 && <span className="ca-tabs__n">{unreadBiz} new</span>}</button>
+        {T('jobs', <LuBriefcase aria-hidden />, 'Job openings')}
+        {T('inbox', <LuInbox aria-hidden />, 'Inbox', unread)}
+        {T('interviews', <LuCalendarDays aria-hidden />, 'Interviews')}
+        {T('accepted', <LuUserCheck aria-hidden />, 'Accepted')}
+        {T('rejected', <LuUserX aria-hidden />, 'Not accepted')}
+        {T('business', <LuHandshake aria-hidden />, 'Business inquiries', unreadBiz)}
       </div>
       <div hidden={tab !== 'jobs'}><Editor token={token} demo={demo} onSignOut={onSignOut} /></div>
       <div hidden={tab !== 'inbox'}>
-        <div className="ca-ed__head" style={{ marginBottom: 18 }}>
-          <div><h1>Inbox{demo && <span className="ca-tag">Demo</span>}</h1><p>Job applications with CVs and job-alert sign-ups from the website.</p></div>
-          <div className="ca-ed__actions"><button type="button" className="ca-btn" onClick={onSignOut}><LuLogOut aria-hidden /> Sign out</button></div>
-        </div>
-        <AdminInbox token={token} demo={demo} onSignOut={onSignOut} onCount={setUnread} kinds={['application', 'alert']} />
+        <Head title="Inbox" text="New job applications with CVs and job-alert sign-ups. Reply with a template or move an application to the next step." />
+        <AdminInbox {...common} onCount={setUnread} kinds={['application', 'alert']} stages={['new']} active={tab === 'inbox'} />
+      </div>
+      <div hidden={tab !== 'interviews'}>
+        <Head title="Interviews" text="Scheduled interviews. Click a day in the calendar to see who is coming." />
+        <AdminInbox {...common} onCount={noop} kinds={['application']} stages={['interview']} active={tab === 'interviews'} calendar />
+      </div>
+      <div hidden={tab !== 'accepted'}>
+        <Head title="Accepted" text="Candidates who received an offer. Their CVs stay here." />
+        <AdminInbox {...common} onCount={noop} kinds={['application']} stages={['accepted']} active={tab === 'accepted'} />
+      </div>
+      <div hidden={tab !== 'rejected'}>
+        <Head title="Not accepted" text="Candidates who were not selected. Their CVs are kept on file for future openings." />
+        <AdminInbox {...common} onCount={noop} kinds={['application']} stages={['rejected']} active={tab === 'rejected'} />
       </div>
       <div hidden={tab !== 'business'}>
-        <div className="ca-ed__head" style={{ marginBottom: 18 }}>
-          <div><h1>Business inquiries{demo && <span className="ca-tag">Demo</span>}</h1><p>Messages from the Contact Us form: quote requests, site visits, partnerships and service questions.</p></div>
-          <div className="ca-ed__actions"><button type="button" className="ca-btn" onClick={onSignOut}><LuLogOut aria-hidden /> Sign out</button></div>
-        </div>
-        <AdminInbox token={token} demo={demo} onSignOut={onSignOut} onCount={setUnreadBiz} kinds={['contact']} />
+        <Head title="Business inquiries" text="Messages from the Contact Us form: quote requests, site visits, partnerships and service questions." />
+        <AdminInbox {...common} onCount={setUnreadBiz} kinds={['contact']} active={tab === 'business'} />
       </div>
     </>
   )

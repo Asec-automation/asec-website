@@ -7,7 +7,9 @@
  *   GET    /api/inbox?id=ID        → one item with full text (login token)
  *   GET    /api/inbox?cv=ID        → a signed 10-minute link to the CV (login token)
  *   GET    /api/inbox?file=…&sig=… → the CV file itself (signed link)
- *   PATCH  /api/inbox?id=ID        → { read: true|false } (login token)
+ *   PATCH  /api/inbox?id=ID        → { read?, stage?, interview? } (login token)
+ *                                    stage: new | interview | accepted | rejected
+ *                                    interview: { date: 'YYYY-MM-DD', time: 'HH:MM', interviewer }
  *   DELETE /api/inbox?id=ID        → delete item and CV (login token)
  *
  * Optional email copy: once asecautomation.com uses Cloudflare Email Routing, add a "send_email"
@@ -30,7 +32,10 @@ const summary = (it) => ({
   name: clean(it.name, 80), email: clean(it.email, 100),
   title: clean(it.position || it.subject || it.area || '', 120),
   cv: it.cv ? { name: clean(it.cv.name, 100), size: it.cv.size } : undefined,
+  stage: it.stage || undefined,
+  interview: it.interview ? { date: it.interview.date, time: it.interview.time, interviewer: clean(it.interview.interviewer, 60) } : undefined,
 })
+const STAGES = ['new', 'interview', 'accepted', 'rejected']
 
 async function rateLimited(kv, request) {
   const ip = request.headers.get('CF-Connecting-IP') || 'local'
@@ -158,7 +163,16 @@ export async function onRequest({ request, env, ctx }) {
     if (request.method === 'PATCH' && id) {
       const v = await kv.get(P_ITEM + id); if (!v) return json(404, { error: 'Not found.' })
       const it = JSON.parse(v); const b = await request.json().catch(() => ({}))
-      it.read = !!b.read
+      if ('read' in b) it.read = !!b.read
+      if ('stage' in b) { if (!STAGES.includes(b.stage)) return json(400, { error: 'Unknown stage.' }); it.stage = b.stage; it.stageAt = Date.now() }
+      if ('interview' in b) {
+        const iv = b.interview
+        if (iv === null) delete it.interview
+        else {
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(iv?.date || '') || !/^\d{2}:\d{2}$/.test(iv?.time || '')) return json(400, { error: 'Enter a valid date and time.' })
+          it.interview = { date: iv.date, time: iv.time, interviewer: clean(iv.interviewer, 60) }
+        }
+      }
       await kv.put(P_ITEM + id, JSON.stringify(it), { metadata: summary(it) })
       return json(200, { ok: true })
     }
