@@ -130,7 +130,7 @@ export const projectPhotos = [
   { src: '/images/gallery/project-cable-routing.webp', alt: 'Cable trays routed along a plant building' },
 ]
 export const workshopPhotos = [
-  { src: '/images/gallery/workshop-building-real.webp', alt: 'ASEC Automation Workshop Building', icon: 'building' },
+  { src: '/images/gallery/workshop-building-2.webp', alt: 'ASEC Automation Workshop Building', icon: 'building' },
   { src: '/images/gallery/panel-floor-2.webp', alt: 'Panel Workshop Floor with Switchboards', icon: 'grid' },
   { src: '/images/gallery/switchboard-assembly-2.webp', alt: 'Switchboards Under Assembly', icon: 'zap' },
   { src: '/images/gallery/motor-service-2.webp', alt: 'Motor Service Workshop', icon: 'motor' },
