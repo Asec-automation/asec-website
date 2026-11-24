@@ -116,7 +116,7 @@ function Login({ onToken, onDemo, area = 'careers', title = 'Careers admin', tex
         <button className="btn btn--primary" type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
       </form>
       {!API_AVAILABLE && <button type="button" className="ca-demo" onClick={onDemo}>Open the demo (preview only — nothing is saved)</button>}
-      <Link to="/careers" className="ca-back">← Back to Careers</Link>
+      {area === 'business' ? <Link to="/contact" className="ca-back">← Back to Contact Us</Link> : <Link to="/careers" className="ca-back">← Back to Careers</Link>}
     </div>
   )
 }
