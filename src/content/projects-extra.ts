@@ -44,8 +44,8 @@ const rows: Row[] = [
   ['fm-new-capital-hospitals', 'El Yasmine & El Narges Hospitals — O&M MEP', 'New Capital hospitals', 'Egypt', 'New Capital', 'Healthcare', 'Operation & Maintenance', 'MEP operation and maintenance for El Yasmine and El Narges hospitals in the New Administrative Capital.', 2025, true],
   ['fm-port-said-hospitals', 'Port Said Hospitals — O&M MEP', 'Egyptian Health Authority', 'Egypt', 'Port Said', 'Healthcare', 'Operation & Maintenance', 'O&M for El Mabarah, El Tadamon, El Shefa and El Hayah hospitals.', 2026, true],
   // ---- Oil & gas, petrochemical, fertilizers ----
-  ['eni-zohr', 'Zohr — Commissioning & Compressor Upgrade', 'ENI', 'Egypt', 'Zohr', 'Oil & Gas', 'Commissioning', 'Atlas Copco compressor upgrade, plus commissioning and engineering technical support.'],
-  ['bp-wnd', 'West Nile Delta — Commissioning Support', 'bp', 'Egypt', 'West Nile Delta', 'Oil & Gas', 'Commissioning', 'Commissioning and engineering technical support.'],
+  ['eni-zohr', 'Zohr — Commissioning & Compressor Upgrade', 'ENPPI', 'Egypt', 'Zohr', 'Oil & Gas', 'Commissioning', 'Atlas Copco compressor upgrade, plus commissioning and engineering technical support.'],
+  ['bp-wnd', 'West Nile Delta — Commissioning Support', 'ENPPI', 'Egypt', 'West Nile Delta', 'Oil & Gas', 'Commissioning', 'Commissioning and engineering technical support.'],
   ['air-liquide-asu', 'Air Separation Units — DCS Upgrade', 'Air Liquide', 'Egypt', '', 'Oil & Gas', 'Control System Modernization', 'DCS upgrade for air separation units; PLC and control system modifications at TCI Sanmar, Port Said.'],
   ['nile-valley-gas-scada', 'Beni Suef Gas Network — SCADA', 'Nile Valley Gas Company', 'Egypt', 'Beni Suef', 'Oil & Gas', 'PLC & SCADA', 'SCADA system for the Beni Suef gas network.'],
   ['akfel-assiut-prms', 'Assiut PRMS & Odorant Plant — Automation', 'AKFEL', 'Egypt', 'Assiut', 'Oil & Gas', 'PLC & SCADA', 'Automation system for the Assiut PRMS and odorant plant.'],

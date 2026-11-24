@@ -89,7 +89,7 @@ function Partners() {
   )
 }
 
-const KEY_CLIENTS = ['LafargeHolcim', 'CEMEX', 'Heidelberg Materials', 'Titan Cement', 'Italcementi', 'FLSmidth', 'Eni', 'bp', 'TAQA Arabia', 'GE Vernova', 'Elsewedy Electric', 'Samsung', 'Saint-Gobain', 'Ezz Steel', 'Jotun', 'Air Liquide']
+const KEY_CLIENTS = ['LafargeHolcim', 'CEMEX', 'Heidelberg Materials', 'Titan Cement', 'Italcementi', 'FLSmidth', 'ENPPI', 'TAQA Arabia', 'GE Vernova', 'Elsewedy Electric', 'Samsung', 'Saint-Gobain', 'Ezz Steel', 'Jotun', 'Air Liquide']
 
 function Clients() {
   const row = [...KEY_CLIENTS, ...KEY_CLIENTS]
