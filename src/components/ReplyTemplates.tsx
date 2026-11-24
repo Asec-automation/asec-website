@@ -32,7 +32,7 @@ export function ReplyTemplates({ name, email, position, interview, onSchedule, o
   const mail = useMemo(() => {
     if (kind === 'interview') return {
       subject: `Interview invitation${role ? ` — ${role}` : ''} | ASEC Automation`,
-      body: `Dear ${first},\n\nThank you for applying for ${roleText} at ASEC Automation. We are pleased to invite you to an interview.\n\nDate: ${fmtDate(date) || '[date]'}\nTime: ${fmtTime(time) || '[time]'} (Cairo time)\nInterviewer: ${interviewer || '[interviewer name]'}\nLocation: ASEC Automation head office, ${ADDRESS}${MAP ? `\nMap: ${MAP}` : ''}\n\nPlease arrive 10 minutes early, and reply to this email to confirm your attendance. If this time does not suit you, let us know and we will arrange another slot.\n\nWe look forward to meeting you.\n\n${SIGN}`,
+      body: `Dear ${first},\n\nThank you for applying for ${roleText} at ASEC Automation. We are pleased to invite you to an interview.\n\nDate: ${fmtDate(date) || '[date]'}\nTime: ${fmtTime(time) || '[time]'} (Cairo time)\nInterviewer: ${interviewer || '[interviewer name]'}\nLocation: ${MAP || `ASEC Automation head office, ${ADDRESS}`}\n\nPlease arrive 10 minutes early, and reply to this email to confirm your attendance. If this time does not suit you, let us know and we will arrange another slot.\n\nWe look forward to meeting you.\n\n${SIGN}`,
       action: 'Open in Outlook & schedule',
     }
     if (kind === 'regret') return {
@@ -85,7 +85,7 @@ export function ReplyTemplates({ name, email, position, interview, onSchedule, o
               <label>Time<input type="time" value={time} onChange={(e) => setTime(e.target.value)} /></label>
               <label>Interviewer name<input type="text" value={interviewer} onChange={(e) => setInterviewer(e.target.value)} placeholder="Full name and title" /></label>
               <label>Interviewer email (CC)<input type="email" value={cc} onChange={(e) => setCc(e.target.value)} placeholder="name@asecautomation.com" /></label>
-              <p className="rt__loc"><LuMapPin aria-hidden /> Location is added automatically: ASEC head office, {ADDRESS}</p>
+              <p className="rt__loc"><LuMapPin aria-hidden /> The Google Maps link to the ASEC head office is added automatically (the full address is in the signature).</p>
             </div>
           )}
           {kind === 'offer' && (
