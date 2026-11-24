@@ -35,26 +35,32 @@ function Workspace({ token, demo, onSignOut }: { token: string; demo: boolean; o
   const [unreadBiz, setUnreadBiz] = useState(0)
   const noop = () => {}
   const T = (k: Tab, icon: React.ReactNode, label: string, badge = 0) => (
-    <button type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'is-on' : ''} onClick={() => setTab(k)}>{icon} {label}{badge > 0 && <span className="ca-tabs__n">{badge} new</span>}</button>
+    <button type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'is-on' : ''} onClick={() => setTab(k)}>{icon} {label}{badge > 0 && <span className="ca-tabs__n">{badge}</span>}</button>
   )
   const Head = ({ title, text }: { title: string; text: string }) => (
     <div className="ca-ed__head" style={{ marginBottom: 18 }}>
       <div><h1>{title}{demo && <span className="ca-tag">Demo</span>}</h1><p>{text}</p></div>
-      <div className="ca-ed__actions"><button type="button" className="ca-btn" onClick={onSignOut}><LuLogOut aria-hidden /> Sign out</button></div>
     </div>
   )
   const common = { token, demo, onSignOut }
   return (
     <>
-      <div className="ca-tabs" role="tablist" aria-label="Careers admin sections">
+      <div className="ca-ws">
+      <nav className="ca-tabs" role="tablist" aria-label="Careers admin sections" aria-orientation="vertical">
+        <span className="ca-tabs__group">Jobs</span>
         {T('jobs', <LuBriefcase aria-hidden />, 'Job openings')}
+        <span className="ca-tabs__group">Applicants</span>
         {T('inbox', <LuInbox aria-hidden />, 'Inbox', unread)}
         {T('interviews', <LuCalendarDays aria-hidden />, 'Interviews')}
         {T('accepted', <LuUserCheck aria-hidden />, 'Accepted')}
         {T('rejected', <LuUserX aria-hidden />, 'Not accepted')}
+        <span className="ca-tabs__group">Company</span>
         {T('business', <LuHandshake aria-hidden />, 'Business inquiries', unreadBiz)}
+        <span className="ca-tabs__sep" aria-hidden />
         {T('bin', <LuTrash2 aria-hidden />, 'Deleted')}
-      </div>
+        <button type="button" className="ca-tabs__out" onClick={onSignOut}><LuLogOut aria-hidden /> Sign out</button>
+      </nav>
+      <div className="ca-ws__main">
       <div hidden={tab !== 'jobs'}><Editor token={token} demo={demo} onSignOut={onSignOut} /></div>
       <div hidden={tab !== 'inbox'}>
         <Head title="Inbox" text="New job applications with CVs and job-alert sign-ups. Reply with a template or move an application to the next step." />
@@ -79,6 +85,8 @@ function Workspace({ token, demo, onSignOut }: { token: string; demo: boolean; o
       <div hidden={tab !== 'bin'}>
         <Head title="Deleted" text="Deleted applications, job alerts and business inquiries. Restore an item to put it back where it was, or delete it forever." />
         <AdminInbox {...common} onCount={noop} active={tab === 'bin'} bin />
+      </div>
+      </div>
       </div>
     </>
   )
@@ -201,7 +209,6 @@ function Editor({ token, demo, onSignOut }: { token: string; demo: boolean; onSi
           <button type="button" className="ca-btn" onClick={() => fileRef.current?.click()}><LuUpload aria-hidden /> Import Excel (CSV)</button>
           <input ref={fileRef} type="file" accept=".csv,text/csv" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) importCsv(f); e.target.value = '' }} />
           <button type="button" className="ca-btn" onClick={exportCsv} disabled={!jobs.length}><LuDownload aria-hidden /> Download Excel (CSV)</button>
-          <button type="button" className="ca-btn" onClick={onSignOut}><LuLogOut aria-hidden /> Sign out</button>
         </div>
       </header>
 

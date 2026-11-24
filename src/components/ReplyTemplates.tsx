@@ -25,6 +25,7 @@ export function ReplyTemplates({ name, email, position, interview, onSchedule, o
   const [time, setTime] = useState(interview?.time || '')
   const [interviewer, setInterviewer] = useState(interview?.interviewer || '')
   const [replyBy, setReplyBy] = useState('')
+  const [cc, setCc] = useState('')
   const [copied, setCopied] = useState(false)
   const first = (name || '').trim().split(/\s+/)[0] || 'Candidate'
   const role = position && position !== 'Open application' ? position : ''
@@ -55,7 +56,7 @@ export function ReplyTemplates({ name, email, position, interview, onSchedule, o
     else if (kind === 'regret') onMove('rejected')
     else if (kind === 'offer') onMove('accepted')
   }
-  const send = () => { if (!mail || !ready) return; window.location.href = `mailto:${email}?subject=${encodeURIComponent(mail.subject)}&body=${encodeURIComponent(mail.body)}`; after() }
+  const send = () => { if (!mail || !ready) return; const ccList = cc.split(/[;,\s]+/).filter(Boolean).join(','); window.location.href = `mailto:${email}?${ccList ? `cc=${encodeURIComponent(ccList)}&` : ''}subject=${encodeURIComponent(mail.subject)}&body=${encodeURIComponent(mail.body)}`; after() }
   /** Copies a formatted version (ASEC logo on top) for Outlook / Gmail, plus plain text as a fallback. */
   const copy = async () => {
     if (!mail || !ready) return
@@ -86,18 +87,21 @@ export function ReplyTemplates({ name, email, position, interview, onSchedule, o
             <div className="rt__fields">
               <label>Date<input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></label>
               <label>Time<input type="time" value={time} onChange={(e) => setTime(e.target.value)} /></label>
-              <label className="rt__wide">Interviewer name<input type="text" value={interviewer} onChange={(e) => setInterviewer(e.target.value)} placeholder="Full name and title" /></label>
+              <label>Interviewer name<input type="text" value={interviewer} onChange={(e) => setInterviewer(e.target.value)} placeholder="Full name and title" /></label>
+              <label>Interviewer email (CC)<input type="email" value={cc} onChange={(e) => setCc(e.target.value)} placeholder="name@asecautomation.com" /></label>
               <p className="rt__loc"><LuMapPin aria-hidden /> Location and website are added automatically: ASEC head office, {ADDRESS} · www.asecautomation.com</p>
             </div>
           )}
           {kind === 'offer' && (
             <div className="rt__fields">
               <label>Reply by (optional)<input type="date" value={replyBy} onChange={(e) => setReplyBy(e.target.value)} /></label>
+              <label>CC (optional)<input type="email" value={cc} onChange={(e) => setCc(e.target.value)} placeholder="e.g. hiring manager" /></label>
               <p className="rt__loc rt__warn"><LuPaperclip aria-hidden /> Remember to attach the offer letter (PDF) in your email before sending.</p>
             </div>
           )}
           <div className="rt__preview" aria-label="Email preview">
             <div className="rt__meta"><span>To</span><b>{email}</b></div>
+            {cc.trim() && <div className="rt__meta"><span>CC</span><b>{cc}</b></div>}
             <div className="rt__meta"><span>Subject</span><b>{mail.subject}</b></div>
             <div className="rt__mail"><img src="/images/brand/logo-dark-full.png" alt="ASEC Automation" /><pre>{mail.body}</pre></div>
           </div>

@@ -1957,3 +1957,21 @@ html[lang="ar"] .hero__title { line-height: 1.25; letter-spacing: 0; }
 .cal__day.is-on .cal__ev { background: rgba(255,255,255,.15); color: #fff; }
 .cal__more { font-size: 11px; color: #1c75bc; }
 @media (max-width: 640px) { .cal__day { min-height: 52px; } .cal__ev { display: none; } .cal__day.has::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #1c75bc; } }
+
+/* Careers admin: sections in a left sidebar */
+.ca-ws { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 32px; align-items: start; }
+.ca-ws .ca-tabs { position: sticky; top: 100px; flex-direction: column; flex-wrap: nowrap; gap: 2px; margin: 0; padding: 12px; border: 1px solid var(--line, #e3e7f0); border-radius: 14px; background: #fff; }
+.ca-ws .ca-tabs button { width: 100%; justify-content: flex-start; padding: 10px 12px; border: 0; border-radius: 10px; margin: 0; font-size: 15px; }
+.ca-ws .ca-tabs button:hover { background: #f2f5fb; color: var(--ink, #040f47); }
+.ca-ws .ca-tabs button.is-on { background: #e8f1fb; color: var(--ink, #040f47); box-shadow: inset 3px 0 0 var(--blue, #1C75BC); }
+.ca-ws .ca-tabs__n { margin-left: auto; }
+.ca-tabs__group { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8a93a8; padding: 12px 12px 4px; }
+.ca-tabs__group:first-child { padding-top: 2px; }
+.ca-tabs__sep { height: 1px; background: var(--line, #e3e7f0); margin: 8px 4px; }
+@media (max-width: 860px) {
+  .ca-ws { grid-template-columns: 1fr; gap: 16px; }
+  .ca-ws .ca-tabs { position: static; flex-direction: row; overflow-x: auto; padding: 6px; }
+  .ca-ws .ca-tabs button { width: auto; white-space: nowrap; }
+  .ca-tabs__group, .ca-tabs__sep { display: none; }
+}
+.ca-ws .ca-tabs .ca-tabs__out { margin-top: 6px; color: #8a93a8; font-weight: 600; }
