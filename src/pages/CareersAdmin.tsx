@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { LuLock, LuLogOut, LuPlus, LuTrash2, LuEye, LuEyeOff, LuArrowUp, LuArrowDown, LuUpload, LuDownload, LuSave, LuCircleCheck, LuTriangleAlert, LuInbox, LuBriefcase, LuHandshake, LuCalendarDays, LuUserCheck, LuUserX } from 'react-icons/lu'
+import { LuLock, LuLogOut, LuPlus, LuTrash2, LuEye, LuEyeOff, LuArrowUp, LuArrowDown, LuUpload, LuDownload, LuSave, LuCircleCheck, LuTriangleAlert, LuInbox, LuBriefcase, LuHandshake, LuCalendarDays, LuUserCheck, LuUserX, LuUsers, LuExternalLink } from 'react-icons/lu'
 import { AdminInbox } from './AdminInbox'
+import { StaffAccounts } from '../components/StaffAccounts'
 import { Link, useRouter } from '../lib/router'
-import { API_AVAILABLE, CAREERS_API, csvToJobs, jobsToCsv, slugify, type EditableJob } from '../content/live-jobs'
+import { API_AVAILABLE, CAREERS_API, STAFF_API, csvToJobs, jobsToCsv, slugify, type EditableJob } from '../content/live-jobs'
 
 const TOKEN_KEY = 'asec-careers-token'
 const TYPES = ['Full-time', 'Part-time', 'Contract', 'Internship']
@@ -13,12 +14,52 @@ const lastSave = (): { savedAt: number; jobs: EditableJob[] } | null => {
   try { const v = JSON.parse(localStorage.getItem(LAST_KEY) || 'null'); return v && Array.isArray(v.jobs) && Date.now() - v.savedAt < 10 * 60e3 ? v : null } catch { return null }
 }
 const setToken = (t: string) => { try { t ? sessionStorage.setItem(TOKEN_KEY, t) : sessionStorage.removeItem(TOKEN_KEY) } catch {} }
+/** Who is signed in (name, username and areas), saved at sign-in. */
+export interface Me { name: string; username: string; roles: string[] }
+const ME_KEY = 'asec-staff-me'
+const getMe = (): Me => { try { const v = JSON.parse(sessionStorage.getItem(ME_KEY) || 'null'); if (v && Array.isArray(v.roles)) return v } catch {} return { name: 'Staff', username: '', roles: [] } }
+const setMe = (m: Me | null) => { try { m ? sessionStorage.setItem(ME_KEY, JSON.stringify(m)) : sessionStorage.removeItem(ME_KEY) } catch {} }
+const canDo = (m: Me, area: string) => m.roles.includes('admin') || m.roles.includes(area)
+const ROLE_LABEL: Record<string, string> = { admin: 'Administrator', careers: 'Recruitment', business: 'Business inquiries' }
+/** Signs out everywhere (careers and business). */
+const signOutAll = () => { setToken(''); setBiz(''); setMe(null) }
+/** Personal accounts can change their own password. */
+function MyPassword({ me, token }: { me: Me; token: string }) {
+  const [cur, setCur] = useState(''); const [pw, setPw] = useState(''); const [msg, setMsg] = useState(''); const [busy, setBusy] = useState(false)
+  if (!me.username || ['hr', 'business', 'admin', 'demo'].includes(me.username)) return null
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault(); setMsg('')
+    if (pw.length < 10) { setMsg('Use at least 10 characters.'); return }
+    setBusy(true)
+    try {
+      const r = await fetch(`${STAFF_API}?action=password`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ current: cur, password: pw }) })
+      const d = await r.json().catch(() => ({}))
+      setMsg(r.ok ? 'Password changed.' : d.error || 'Could not change the password.'); if (r.ok) { setCur(''); setPw('') }
+    } catch { setMsg('Could not reach the server.') } finally { setBusy(false) }
+  }
+  return (
+    <details className="ca-mypw"><summary>Change my password</summary>
+      <form onSubmit={save}>
+        <input type="password" placeholder="Current password" autoComplete="current-password" value={cur} onChange={(e) => setCur(e.target.value)} />
+        <input type="password" placeholder="New password (10+ characters)" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} />
+        <button className="ca-btn" type="submit" disabled={busy}>Save</button>
+        {msg && <small role="status">{msg}</small>}
+      </form>
+    </details>
+  )
+}
+function Who({ me }: { me: Me }) {
+  return (
+    <div className="ca-who"><i aria-hidden>{(me.name || '?').replace(/^Eng\.\s*/, '').charAt(0).toUpperCase()}</i>
+      <div><b>{me.name}</b><small>{me.roles.map((r) => ROLE_LABEL[r] || r).join(' · ') || 'Staff'}</small></div></div>
+  )
+}
 
 export default function CareersAdmin() {
   const [token, setTok] = useState('')
   const [demo, setDemo] = useState(false)
   useEffect(() => { setTok(getToken()) }, [])
-  const signOut = () => { setToken(''); setTok(''); setDemo(false) }
+  const signOut = () => { signOutAll(); setTok(''); setDemo(false) }
   return (
     <section className="ca">
       <div className="container">
@@ -29,8 +70,9 @@ export default function CareersAdmin() {
 }
 
 function Workspace({ token, demo, onSignOut }: { token: string; demo: boolean; onSignOut: () => void }) {
-  type Tab = 'jobs' | 'inbox' | 'interviews' | 'accepted' | 'rejected' | 'bin'
-  const [tab, setTab] = useState<Tab>(() => { try { const h = location.hash.slice(1) as Tab; return (['inbox', 'interviews', 'accepted', 'rejected', 'bin'] as string[]).includes(h) ? h : 'jobs' } catch { return 'jobs' } })
+  type Tab = 'jobs' | 'inbox' | 'interviews' | 'accepted' | 'rejected' | 'bin' | 'staff'
+  const [tab, setTab] = useState<Tab>(() => { try { const h = location.hash.slice(1) as Tab; return (['inbox', 'interviews', 'accepted', 'rejected', 'bin', 'staff'] as string[]).includes(h) ? h : 'jobs' } catch { return 'jobs' } })
+  const [me] = useState<Me>(() => (demo ? { name: 'Demo', username: 'demo', roles: ['admin'] } : getMe()))
   const [unread, setUnread] = useState(0)
   const noop = () => {}
   const T = (k: Tab, icon: React.ReactNode, label: string, badge = 0) => (
@@ -46,6 +88,7 @@ function Workspace({ token, demo, onSignOut }: { token: string; demo: boolean; o
     <>
       <div className="ca-ws">
       <nav className="ca-tabs" role="tablist" aria-label="Careers admin sections" aria-orientation="vertical">
+        <Who me={me} />
         <span className="ca-tabs__group">Jobs</span>
         {T('jobs', <LuBriefcase aria-hidden />, 'Job openings')}
         <span className="ca-tabs__group">Applicants</span>
@@ -53,11 +96,19 @@ function Workspace({ token, demo, onSignOut }: { token: string; demo: boolean; o
         {T('interviews', <LuCalendarDays aria-hidden />, 'Interviews')}
         {T('accepted', <LuUserCheck aria-hidden />, 'Accepted')}
         {T('rejected', <LuUserX aria-hidden />, 'Not accepted')}
+        {(canDo(me, 'business') || canDo(me, 'admin')) && <span className="ca-tabs__group">{canDo(me, 'admin') ? 'Team' : 'Other'}</span>}
+        {canDo(me, 'admin') && T('staff', <LuUsers aria-hidden />, 'Staff accounts')}
+        {canDo(me, 'business') && <Link to="/business/admin" className="ca-tabs__link"><LuHandshake aria-hidden /> Business inquiries <LuExternalLink aria-hidden /></Link>}
         <span className="ca-tabs__sep" aria-hidden />
         {T('bin', <LuTrash2 aria-hidden />, 'Deleted')}
+        <MyPassword me={me} token={token} />
         <button type="button" className="ca-tabs__out" onClick={onSignOut}><LuLogOut aria-hidden /> Sign out</button>
       </nav>
       <div className="ca-ws__main">
+      {canDo(me, 'admin') && <div hidden={tab !== 'staff'}>
+        <Head title="Staff accounts" text="Give each person their own sign-in and choose what they can open. Every change in the inboxes is saved with their name." />
+        <StaffAccounts token={token} demo={demo} active={tab === 'staff'} onSignOut={onSignOut} />
+      </div>}
       <div hidden={tab !== 'jobs'}><Editor token={token} demo={demo} onSignOut={onSignOut} /></div>
       <div hidden={tab !== 'inbox'}>
         <Head title="Inbox" text="New job applications with CVs and job-alert sign-ups. Reply with a template or move an application to the next step." />
@@ -88,7 +139,7 @@ function Workspace({ token, demo, onSignOut }: { token: string; demo: boolean; o
 /** One staff sign-in for the whole website: username "hr" opens the careers admin, "business" opens business inquiries. */
 export function StaffLogin({ page, onToken, onDemo }: { page?: 'careers' | 'business'; onToken?: (t: string) => void; onDemo?: () => void }) {
   const { navigate } = useRouter()
-  const [user, setUser] = useState(page === 'business' ? 'business' : page === 'careers' ? 'hr' : '')
+  const [user, setUser] = useState('')
   const [pw, setPw] = useState(''); const [show, setShow] = useState(false)
   const [err, setErr] = useState(''); const [busy, setBusy] = useState(false)
   const submit = async (e: React.FormEvent) => {
@@ -100,10 +151,14 @@ export function StaffLogin({ page, onToken, onDemo }: { page?: 'careers' | 'busi
       const r = await fetch(`${CAREERS_API}?action=login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: user.trim(), password: pw }) })
       const d = await r.json().catch(() => ({}))
       if (!r.ok) throw new Error(d.error || 'Sign-in failed. Please try again.')
-      const role: 'careers' | 'business' = d.role === 'business' ? 'business' : 'careers'
-      if (role === 'business') setBiz(d.token); else setToken(d.token)
-      if (role === page && onToken) onToken(d.token)
-      else navigate(role === 'business' ? '/business/admin' : '/careers/admin')
+      const roles: string[] = Array.isArray(d.roles) ? d.roles : [d.role === 'business' ? 'business' : 'careers']
+      const me: Me = { name: d.name || user.trim(), username: d.username || user.trim().toLowerCase(), roles }
+      signOutAll(); setMe(me)
+      if (canDo(me, 'careers')) setToken(d.token)
+      if (canDo(me, 'business')) setBiz(d.token)
+      const dest: 'careers' | 'business' = canDo(me, 'careers') ? 'careers' : 'business'
+      if (page && canDo(me, page) && onToken) onToken(d.token)
+      else navigate(dest === 'business' ? '/business/admin' : '/careers/admin')
     } catch (x) { setErr((x as Error).message === 'Failed to fetch' ? 'Couldn’t reach the server. Check your connection and try again.' : (x as Error).message) }
     finally { setBusy(false) }
   }
@@ -111,7 +166,7 @@ export function StaffLogin({ page, onToken, onDemo }: { page?: 'careers' | 'busi
     <div className="ca-login">
       <span className="ca-login__icon"><LuLock aria-hidden /></span>
       <h1>Staff sign-in</h1>
-      <p>For ASEC staff only. HR signs in to manage jobs and applicants; the business team signs in to read business inquiries.</p>
+      <p>For ASEC staff only. Sign in with your own username and password.</p>
       <form onSubmit={submit} noValidate>
         <label htmlFor="ca-user">Username</label>
         <input id="ca-user" className="ca-user" type="text" autoComplete="username" autoCapitalize="none" spellCheck={false} value={user} onChange={(e) => { setUser(e.target.value); setErr('') }} />
@@ -272,7 +327,7 @@ export function BusinessAdmin() {
   const [token, setTok] = useState('')
   const [demo, setDemo] = useState(false)
   useEffect(() => { setTok(getBiz()) }, [])
-  const signOut = () => { setBiz(''); setTok(''); setDemo(false) }
+  const signOut = () => { signOutAll(); setTok(''); setDemo(false) }
   return (
     <section className="ca">
       <div className="container">
@@ -287,6 +342,7 @@ function BusinessWorkspace({ token, demo, onSignOut }: { token: string; demo: bo
   type Tab = 'inbox' | 'bin'
   const [tab, setTab] = useState<Tab>(() => { try { return location.hash === '#bin' ? 'bin' : 'inbox' } catch { return 'inbox' } })
   const [unread, setUnread] = useState(0)
+  const [me] = useState<Me>(() => (demo ? { name: 'Demo', username: 'demo', roles: ['business'] } : getMe()))
   const T = (k: Tab, icon: React.ReactNode, label: string, badge = 0) => (
     <button type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'is-on' : ''} onClick={() => setTab(k)}>{icon} {label}{badge > 0 && <span className="ca-tabs__n">{badge}</span>}</button>
   )
@@ -297,10 +353,13 @@ function BusinessWorkspace({ token, demo, onSignOut }: { token: string; demo: bo
   return (
     <div className="ca-ws">
       <nav className="ca-tabs" role="tablist" aria-label="Business inquiries sections" aria-orientation="vertical">
+        <Who me={me} />
         <span className="ca-tabs__group">Business</span>
         {T('inbox', <LuHandshake aria-hidden />, 'Business inquiries', unread)}
+        {canDo(me, 'careers') && <Link to="/careers/admin" className="ca-tabs__link"><LuBriefcase aria-hidden /> Careers admin <LuExternalLink aria-hidden /></Link>}
         <span className="ca-tabs__sep" aria-hidden />
         {T('bin', <LuTrash2 aria-hidden />, 'Deleted')}
+        <MyPassword me={me} token={token} />
         <button type="button" className="ca-tabs__out" onClick={onSignOut}><LuLogOut aria-hidden /> Sign out</button>
       </nav>
       <div className="ca-ws__main">

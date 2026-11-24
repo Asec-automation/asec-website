@@ -10,6 +10,7 @@ export const API_BASE = typeof location === 'undefined' || /workers\.dev$|^local
 export const CAREERS_API = API_BASE + '/api/careers'
 /** Website inbox: stores contact messages, applications (with CV) and job alerts on the site itself. */
 export const INBOX_API = API_BASE + '/api/inbox'
+export const STAFF_API = API_BASE + '/api/staff'
 
 export interface EditableJob extends Job { show?: boolean }
 

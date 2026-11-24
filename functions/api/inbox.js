@@ -19,7 +19,7 @@
  * binding named INBOX_EMAIL plus the variables INBOX_FROM (e.g. website@asecautomation.com),
  * INBOX_TO_CONTACT and INBOX_TO_CAREERS. Without them, items are only stored (nothing is lost).
  */
-import { tokenRole, hmac, secretOf } from './careers.js'
+import { session, can, hmac, secretOf } from './careers.js'
 
 const P_ITEM = 'asec:inbox:item:'
 const P_CV = 'asec:inbox:cv:'
@@ -141,9 +141,11 @@ export async function onRequest({ request, env, ctx }) {
     }
 
     const auth = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '')
-    const role = await tokenRole(env, auth)
-    if (!role) return json(401, { error: 'Please sign in again.' })
-    const allowed = (kind) => (role === 'business' ? kind === 'contact' : kind !== 'contact')
+    const me = await session(env, auth)
+    if (!me || !(can(me, 'careers') || can(me, 'business'))) return json(401, { error: 'Please sign in again.' })
+    const allowed = (kind) => (kind === 'contact' ? can(me, 'business') : can(me, 'careers'))
+    /** Activity history: who did what (the last 60 entries). */
+    const log = (it, a) => { it.history = [...(it.history || []), { at: Date.now(), by: me.name, a }].slice(-60) }
     const id = clean(url.searchParams.get('id') || url.searchParams.get('cv'), 60)
     let current = null
     if (id) {
@@ -155,6 +157,7 @@ export async function onRequest({ request, env, ctx }) {
 
     if (request.method === 'GET' && url.searchParams.get('cv')) {
       const mode = url.searchParams.get('mode') === 'view' ? 'view' : 'download'
+      if (current) { log(current, mode === 'view' ? 'opened the CV' : 'downloaded the CV'); await kv.put(P_ITEM + id, JSON.stringify(current), { metadata: summary(current) }) }
       const exp = Date.now() + 10 * 60e3
       const sig = await hmac(secretOf(env), `cv.${id}.${exp}.${mode}`)
       return json(200, { url: `${url.pathname}?file=${encodeURIComponent(id)}&exp=${exp}&mode=${mode}&sig=${sig}` })
@@ -172,15 +175,17 @@ export async function onRequest({ request, env, ctx }) {
     }
     if (request.method === 'PATCH' && id) {
       const it = current; const b = await request.json().catch(() => ({}))
-      if ('read' in b) it.read = !!b.read
-      if ('deleted' in b) { if (b.deleted) { it.deleted = true; it.deletedAt = Date.now() } else { delete it.deleted; delete it.deletedAt } }
-      if ('stage' in b) { if (!STAGES.includes(b.stage)) return json(400, { error: 'Unknown stage.' }); it.stage = b.stage; it.stageAt = Date.now() }
+      const LABEL = { new: 'Inbox', interview: 'Interviews', accepted: 'Accepted', rejected: 'Not accepted' }
+      if ('read' in b) { if (!b.read && it.read) log(it, 'marked as unread'); it.read = !!b.read }
+      if ('deleted' in b) { if (b.deleted) { it.deleted = true; it.deletedAt = Date.now(); log(it, 'moved to Deleted') } else { delete it.deleted; delete it.deletedAt; log(it, 'restored from Deleted') } }
+      if ('stage' in b) { if (!STAGES.includes(b.stage)) return json(400, { error: 'Unknown stage.' }); if (b.stage !== (it.stage || 'new')) log(it, `moved to ${LABEL[b.stage]}`); it.stage = b.stage; it.stageAt = Date.now() }
       if ('interview' in b) {
         const iv = b.interview
         if (iv === null) delete it.interview
         else {
           if (!/^\d{4}-\d{2}-\d{2}$/.test(iv?.date || '') || !/^\d{2}:\d{2}$/.test(iv?.time || '')) return json(400, { error: 'Enter a valid date and time.' })
           it.interview = { date: iv.date, time: iv.time, interviewer: clean(iv.interviewer, 60) }
+          log(it, `scheduled an interview for ${iv.date} at ${iv.time}${it.interview.interviewer ? ` with ${it.interview.interviewer}` : ''}`)
         }
       }
       await kv.put(P_ITEM + id, JSON.stringify(it), { metadata: summary(it) })

@@ -7,7 +7,7 @@ import { InterviewCalendar } from '../components/InterviewCalendar'
 type Kind = 'application' | 'contact' | 'alert'
 interface Summary { id: string; kind: Kind; at: number; read: boolean; name: string; email: string; title: string; cv?: { name: string; size: number }; stage?: Stage; interview?: Interview; deleted?: number }
 const STAGE_LABEL: Record<Stage, string> = { new: 'Inbox', interview: 'Interviews', accepted: 'Accepted', rejected: 'Not accepted' }
-interface Full extends Summary { phone?: string; company?: string; country?: string; category?: string; department?: string; position?: string; subject?: string; area?: string; message?: string }
+interface Full extends Summary { phone?: string; company?: string; country?: string; category?: string; department?: string; position?: string; subject?: string; area?: string; message?: string; history?: { at: number; by: string; a: string }[] }
 
 const KIND: Record<Kind, { label: string; icon: React.ReactNode }> = {
   application: { label: 'Job application', icon: <LuBriefcase aria-hidden /> },
@@ -184,6 +184,11 @@ export function AdminInbox({ token, demo, onSignOut, onCount, kinds = ['applicat
                       {it.interview && <><dt>Interview</dt><dd>{fmtDate(it.interview.date)}, {fmtTime(it.interview.time)} · {it.interview.interviewer}</dd></>}
                     </dl>
                     {f?.message && <div className="ib__msg">{f.message}</div>}
+                    {f?.history && f.history.length > 0 && (
+                      <details className="ib__hist"><summary>Activity ({f.history.length})</summary>
+                        <ol>{[...f.history].reverse().map((h, k) => <li key={k}><b>{h.by}</b> {h.a}<time>{when(h.at)}</time></li>)}</ol>
+                      </details>
+                    )}
                     {!f && <p className="muted">Loading…</p>}
                     {it.kind === 'application' && !bin && <ReplyTemplates name={f?.name || it.name} email={it.email} position={f?.position || it.title} interview={it.interview} onSchedule={(iv) => setStage(it, 'interview', iv)} onMove={(st) => setStage(it, st)} />}
                     {it.kind === 'application' && !bin && (

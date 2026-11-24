@@ -3,7 +3,7 @@
  *
  *   GET  /api/careers              → published job openings (public)
  *   GET  /api/careers?all=1        → all openings incl. hidden (needs login token)
- *   POST /api/careers?action=login → { username, password } → { token, role }   (token valid 8 hours)
+ *   POST /api/careers?action=login → { username, password } → { token, roles, name }   (token valid 8 hours)
  *                                    username "hr" → careers (jobs + applicants)
  *                                    username "business" → business inquiries only
  *   PUT  /api/careers              → save the full list (needs login token)
@@ -31,19 +31,60 @@ async function sha(s) { return new Uint8Array(await crypto.subtle.digest('SHA-25
 function equalBytes(a, b) { if (a.length !== b.length) return false; let d = 0; for (let i = 0; i < a.length; i++) d |= a[i] ^ b[i]; return d === 0 }
 
 export const secretOf = (env) => env.CAREERS_TOKEN_SECRET || env.CAREERS_ADMIN_PASSWORD || ''
-/** Tokens are "<role>.<expiry>.<signature>"; role is "careers" (HR) or "business". */
-async function makeToken(env, role = 'careers') { const body = `${role}.${Date.now() + TOKEN_HOURS * 3600e3}`; return `${body}.${await hmac(secretOf(env), body)}` }
-/** Returns the token's role ("careers" | "business"), or '' if the token is missing, forged or expired. */
-export async function tokenRole(env, t) {
-  if (!t || !secretOf(env)) return ''
-  const i = t.lastIndexOf('.'); if (i < 0) return ''
-  const body = t.slice(0, i), sig = t.slice(i + 1)
-  if (!equalBytes(enc.encode(sig), enc.encode(await hmac(secretOf(env), body)))) return ''
-  const [role, e] = body.split('.'); const exp = Number(e)
-  return Number.isFinite(exp) && exp > Date.now() && (role === 'careers' || role === 'business') ? role : ''
+/* ------------------------------------------------------------------------------------------
+ * Staff sign-in
+ *   Personal accounts live in KV (STAFF_KEY): { username, name, roles, pw, active, createdAt, createdBy }.
+ *   roles: "careers" (recruitment: jobs + applicants), "business" (business inquiries),
+ *          "admin" (everything, plus staff accounts)
+ *   Built-in accounts (secrets in Cloudflare): hr → CAREERS_ADMIN_PASSWORD, business → BUSINESS_ADMIN_PASSWORD,
+ *   admin → ADMIN_PASSWORD (the first administrator, who creates everyone else).
+ *   Tokens: "<body>.<expiry>.<signature>", body = "careers" | "business" (shared accounts) | "u~<username>".
+ * ------------------------------------------------------------------------------------------ */
+export const STAFF_KEY = 'asec:staff:users'
+export const ROLES = ['careers', 'business', 'admin']
+export async function loadStaff(kv) { try { const v = JSON.parse((await kv.get(STAFF_KEY)) || '[]'); return Array.isArray(v) ? v : [] } catch { return [] } }
+export async function saveStaff(kv, list) { await kv.put(STAFF_KEY, JSON.stringify(list)) }
+
+const b64 = (u8) => btoa(String.fromCharCode(...u8))
+const unb64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0))
+const PBKDF2_ITER = 100000
+async function pbkdf2(password, salt, iter) {
+  const key = await crypto.subtle.importKey('raw', enc.encode(String(password)), 'PBKDF2', false, ['deriveBits'])
+  return new Uint8Array(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: iter }, key, 256))
 }
-/** HR (careers) sign-in only. */
-export async function validToken(env, t) { return (await tokenRole(env, t)) === 'careers' }
+/** Stored as "pbkdf2$<iterations>$<salt>$<hash>"; the password itself is never stored. */
+export async function hashPassword(password) {
+  const salt = crypto.getRandomValues(new Uint8Array(16))
+  return `pbkdf2$${PBKDF2_ITER}$${b64(salt)}$${b64(await pbkdf2(password, salt, PBKDF2_ITER))}`
+}
+export async function checkPassword(password, stored) {
+  const [kind, it, salt, hash] = String(stored || '').split('$')
+  if (kind !== 'pbkdf2' || !salt || !hash) return false
+  return equalBytes(await pbkdf2(password, unb64(salt), Number(it) || PBKDF2_ITER), unb64(hash))
+}
+
+async function makeToken(env, who) { const body = `${who}.${Date.now() + TOKEN_HOURS * 3600e3}`; return `${body}.${await hmac(secretOf(env), body)}` }
+
+/** The signed-in person: { user, name, roles }, or null if the token is missing, forged, expired or the account is disabled. */
+export async function session(env, t) {
+  if (!t || !secretOf(env)) return null
+  const i = t.lastIndexOf('.'); if (i < 0) return null
+  const body = t.slice(0, i), sig = t.slice(i + 1)
+  if (!equalBytes(enc.encode(sig), enc.encode(await hmac(secretOf(env), body)))) return null
+  const j = body.lastIndexOf('.'); const who = body.slice(0, j), exp = Number(body.slice(j + 1))
+  if (!Number.isFinite(exp) || exp <= Date.now()) return null
+  if (who === 'careers') return { user: 'hr', name: 'HR (shared account)', roles: ['careers'] }
+  if (who === 'business') return { user: 'business', name: 'Business (shared account)', roles: ['business'] }
+  if (!who.startsWith('u~')) return null
+  const user = who.slice(2)
+  if (user === 'admin') return env.ADMIN_PASSWORD ? { user, name: 'Administrator', roles: ['admin'] } : null
+  const u = (await loadStaff(env.CAREERS_KV)).find((x) => x.username === user)
+  return u && u.active !== false ? { user, name: u.name || user, roles: u.roles || [] } : null
+}
+/** Can this session use an area ("careers" | "business" | "admin")? Admins can use everything. */
+export const can = (s, area) => !!s && (s.roles.includes('admin') || s.roles.includes(area))
+/** Recruitment (careers) access. */
+export async function validToken(env, t) { return can(await session(env, t), 'careers') }
 
 const clean = (s, n = 400) => String(s ?? '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, n)
 const cleanList = (a) => (Array.isArray(a) ? a : String(a ?? '').split(/;|\n/)).map((x) => clean(x, 300)).filter(Boolean).slice(0, 20)
@@ -81,13 +122,26 @@ export async function onRequest({ request, env }) {
       if (tries > 10) return json(429, { error: 'Too many attempts. Try again in 15 minutes.' })
       await kv.put(lk, String(tries), { expirationTtl: 900 })
       const { username, password, area } = await request.json().catch(() => ({}))
-      const u = String(username ?? '').trim().toLowerCase()
-      const role = u ? ({ hr: 'careers', business: 'business' })[u] : area === 'business' ? 'business' : 'careers'
-      const expected = role === 'business' ? env.BUSINESS_ADMIN_PASSWORD : role === 'careers' ? env.CAREERS_ADMIN_PASSWORD : ''
-      if (role && !expected) return json(500, { error: 'This account has not been set up yet.' })
-      if (!role || !password || !equalBytes(await sha(password), await sha(expected))) return json(401, { error: 'Incorrect username or password.' })
+      const bad = () => json(401, { error: 'Incorrect username or password.' })
+      if (!password) return bad()
+      const key = String(username ?? '').trim().toLowerCase() || (area === 'business' ? 'business' : 'hr')
+      const shared = { hr: ['careers', env.CAREERS_ADMIN_PASSWORD, 'HR (shared account)'], business: ['business', env.BUSINESS_ADMIN_PASSWORD, 'Business (shared account)'] }
+      let who = '', name = '', roles = []
+      if (shared[key]) {
+        const [role, expected, label] = shared[key]
+        if (!expected || !equalBytes(await sha(password), await sha(expected))) return bad()
+        who = role; name = label; roles = [role]
+      } else if (key === 'admin') {
+        if (!env.ADMIN_PASSWORD || !equalBytes(await sha(password), await sha(env.ADMIN_PASSWORD))) return bad()
+        who = 'u~admin'; name = 'Administrator'; roles = ['admin']
+      } else {
+        const acc = (await loadStaff(kv)).find((x) => x.username === key)
+        if (!acc || acc.active === false || !(await checkPassword(password, acc.pw))) return bad()
+        who = `u~${acc.username}`; name = acc.name || acc.username; roles = acc.roles || []
+      }
       await kv.delete(lk)
-      return json(200, { token: await makeToken(env, role), role, hours: TOKEN_HOURS })
+      const role = roles.includes('admin') || roles.includes('careers') ? 'careers' : 'business'
+      return json(200, { token: await makeToken(env, who), role, roles, name, username: key, hours: TOKEN_HOURS })
     }
 
     if (request.method === 'PUT') {

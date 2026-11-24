@@ -4,6 +4,7 @@
  */
 import { onRequest as careers } from '../functions/api/careers.js'
 import { onRequest as inbox } from '../functions/api/inbox.js'
+import { onRequest as staff } from '../functions/api/staff.js'
 
 /** Pages that were removed from the site → where to send visitors instead. */
 const MOVED = [
@@ -35,9 +36,10 @@ function cors(request, response) {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url)
-    if (url.pathname === '/api/careers' || url.pathname === '/api/inbox') {
+    const API = { '/api/careers': careers, '/api/inbox': inbox, '/api/staff': staff }
+    if (API[url.pathname]) {
       if (request.method === 'OPTIONS') return cors(request, new Response(null, { status: 204 }))
-      const handler = url.pathname === '/api/careers' ? careers : inbox
+      const handler = API[url.pathname]
       return cors(request, await handler({ request, env, ctx }))
     }
 
