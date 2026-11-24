@@ -8,14 +8,16 @@ interface Full extends Summary { phone?: string; company?: string; country?: str
 
 const KIND: Record<Kind, { label: string; icon: React.ReactNode }> = {
   application: { label: 'Job application', icon: <LuBriefcase aria-hidden /> },
-  contact: { label: 'Contact message', icon: <LuMessageSquare aria-hidden /> },
+  contact: { label: 'Business inquiry', icon: <LuMessageSquare aria-hidden /> },
   alert: { label: 'Job alert', icon: <LuBell aria-hidden /> },
 }
 const when = (t: number) => new Date(t).toLocaleString(undefined, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 const mb = (n: number) => `${(n / 1024 / 1024).toFixed(2)} MB`
 
 /** The website inbox: every application (with CV), contact message and job-alert sign-up. */
-export function AdminInbox({ token, demo, onSignOut, onCount }: { token: string; demo: boolean; onSignOut: () => void; onCount: (n: number) => void }) {
+export function AdminInbox({ token, demo, onSignOut, onCount, kinds = ['application', 'contact', 'alert'] }: { token: string; demo: boolean; onSignOut: () => void; onCount: (n: number) => void; kinds?: Kind[] }) {
+  const keep = (l: Summary[]) => l.filter((i) => kinds.includes(i.kind))
+  const business = kinds.length === 1 && kinds[0] === 'contact'
   const [items, setItems] = useState<Summary[]>([])
   const [loading, setLoading] = useState(!demo)
   const [err, setErr] = useState('')
@@ -28,15 +30,15 @@ export function AdminInbox({ token, demo, onSignOut, onCount }: { token: string;
 
   const load = () => {
     if (demo) {
-      setItems([
+      setItems(keep([
         { id: 'd1', kind: 'application', at: Date.now() - 3600e3, read: false, name: 'Ahmed Hassan', email: 'ahmed@example.com', title: 'Senior PLC Engineer', cv: { name: 'Ahmed-Hassan-CV.pdf', size: 412000 } },
         { id: 'd2', kind: 'contact', at: Date.now() - 86400e3, read: true, name: 'Mona Adel', email: 'mona@example.com', title: 'MCC upgrade for a cement plant' },
         { id: 'd3', kind: 'alert', at: Date.now() - 2 * 86400e3, read: true, name: '', email: 'candidate@example.com', title: 'Automation & control' },
-      ]); return
+      ])); return
     }
     setLoading(true); setErr('')
     fetch(INBOX_API, { headers: auth, cache: 'no-store' })
-      .then(async (r) => { const d = await r.json().catch(() => ({})); if (r.status === 401) { onSignOut(); return } if (!r.ok) throw new Error(d.error); setItems(d.items || []) })
+      .then(async (r) => { const d = await r.json().catch(() => ({})); if (r.status === 401) { onSignOut(); return } if (!r.ok) throw new Error(d.error); setItems(keep(d.items || [])) })
       .catch((x) => setErr((x as Error).message || 'Couldn’t load the inbox.'))
       .finally(() => setLoading(false))
   }
@@ -102,7 +104,7 @@ export function AdminInbox({ token, demo, onSignOut, onCount }: { token: string;
     <div className="ib">
       <div className="ib__bar">
         <div className="ib__filters" role="tablist" aria-label="Filter inbox">
-          {(['all', 'application', 'contact', 'alert'] as const).map((k) => (
+          {kinds.length > 1 && (['all', ...kinds] as const).map((k) => (
             <button key={k} type="button" role="tab" aria-selected={filter === k} className={filter === k ? 'is-on' : ''} onClick={() => setFilter(k)}>
               {k === 'all' ? `All (${items.length})` : `${KIND[k].label}s (${count(k)})`}
             </button>
@@ -113,7 +115,7 @@ export function AdminInbox({ token, demo, onSignOut, onCount }: { token: string;
       <div className="ib__search" role="search">
         <LuSearch aria-hidden />
         <label className="sr-only" htmlFor="ib-q">Search the inbox</label>
-        <input id="ib-q" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by job title, name or email — e.g. “Procurement Engineer”" autoComplete="off" />
+        <input id="ib-q" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={business ? 'Search by subject, name, company or email…' : 'Search by job title, name or email — e.g. “Procurement Engineer”'} autoComplete="off" />
         {(q || position) && <button type="button" className="ib__clear" onClick={() => { setQ(''); setPosition('') }}><LuX aria-hidden /> Clear</button>}
       </div>
       {positions.length > 0 && (filter === 'all' || filter === 'application') && (
@@ -128,7 +130,7 @@ export function AdminInbox({ token, demo, onSignOut, onCount }: { token: string;
       {err && <p className="ca-msg ca-msg--err">{err}</p>}
       {loading ? <p className="muted">Loading inbox…</p> : shown.length === 0 ? (
         (q || position) && items.length ? <div className="ca-empty"><h2>No matches</h2><p>Nothing matches your search. Try another job title or clear the search.</p></div>
-        : <div className="ca-empty"><h2>Nothing here yet</h2><p>New job applications, contact messages and job-alert sign-ups from the website appear here.</p></div>
+        : <div className="ca-empty"><h2>Nothing here yet</h2><p>{business ? 'Messages sent through the Contact Us form (quotes, site visits, partnership and service questions) appear here.' : 'New job applications and job-alert sign-ups from the website appear here.'}</p></div>
       ) : (
         <ul className="ib__list">
           {shown.map((it) => {

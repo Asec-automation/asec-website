@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { LuLock, LuLogOut, LuPlus, LuTrash2, LuEye, LuEyeOff, LuArrowUp, LuArrowDown, LuUpload, LuDownload, LuSave, LuCircleCheck, LuTriangleAlert, LuInbox, LuBriefcase } from 'react-icons/lu'
+import { LuLock, LuLogOut, LuPlus, LuTrash2, LuEye, LuEyeOff, LuArrowUp, LuArrowDown, LuUpload, LuDownload, LuSave, LuCircleCheck, LuTriangleAlert, LuInbox, LuBriefcase, LuHandshake } from 'react-icons/lu'
 import { AdminInbox } from './AdminInbox'
 import { Link } from '../lib/router'
 import { API_AVAILABLE, CAREERS_API, csvToJobs, jobsToCsv, slugify, type EditableJob } from '../content/live-jobs'
@@ -29,21 +29,30 @@ export default function CareersAdmin() {
 }
 
 function Workspace({ token, demo, onSignOut }: { token: string; demo: boolean; onSignOut: () => void }) {
-  const [tab, setTab] = useState<'jobs' | 'inbox'>(() => { try { return (location.hash.includes('inbox') ? 'inbox' : 'jobs') } catch { return 'jobs' } })
+  const [tab, setTab] = useState<'jobs' | 'inbox' | 'business'>(() => { try { return location.hash.includes('inbox') ? 'inbox' : location.hash.includes('business') ? 'business' : 'jobs' } catch { return 'jobs' } })
   const [unread, setUnread] = useState(0)
+  const [unreadBiz, setUnreadBiz] = useState(0)
   return (
     <>
       <div className="ca-tabs" role="tablist" aria-label="Careers admin sections">
         <button type="button" role="tab" aria-selected={tab === 'jobs'} className={tab === 'jobs' ? 'is-on' : ''} onClick={() => setTab('jobs')}><LuBriefcase aria-hidden /> Job openings</button>
         <button type="button" role="tab" aria-selected={tab === 'inbox'} className={tab === 'inbox' ? 'is-on' : ''} onClick={() => setTab('inbox')}><LuInbox aria-hidden /> Inbox{unread > 0 && <span className="ca-tabs__n">{unread} new</span>}</button>
+        <button type="button" role="tab" aria-selected={tab === 'business'} className={tab === 'business' ? 'is-on' : ''} onClick={() => setTab('business')}><LuHandshake aria-hidden /> Business inquiries{unreadBiz > 0 && <span className="ca-tabs__n">{unreadBiz} new</span>}</button>
       </div>
       <div hidden={tab !== 'jobs'}><Editor token={token} demo={demo} onSignOut={onSignOut} /></div>
       <div hidden={tab !== 'inbox'}>
         <div className="ca-ed__head" style={{ marginBottom: 18 }}>
-          <div><h1>Inbox{demo && <span className="ca-tag">Demo</span>}</h1><p>Job applications with CVs, contact messages and job-alert sign-ups from the website.</p></div>
+          <div><h1>Inbox{demo && <span className="ca-tag">Demo</span>}</h1><p>Job applications with CVs and job-alert sign-ups from the website.</p></div>
           <div className="ca-ed__actions"><button type="button" className="ca-btn" onClick={onSignOut}><LuLogOut aria-hidden /> Sign out</button></div>
         </div>
-        <AdminInbox token={token} demo={demo} onSignOut={onSignOut} onCount={setUnread} />
+        <AdminInbox token={token} demo={demo} onSignOut={onSignOut} onCount={setUnread} kinds={['application', 'alert']} />
+      </div>
+      <div hidden={tab !== 'business'}>
+        <div className="ca-ed__head" style={{ marginBottom: 18 }}>
+          <div><h1>Business inquiries{demo && <span className="ca-tag">Demo</span>}</h1><p>Messages from the Contact Us form: quote requests, site visits, partnerships and service questions.</p></div>
+          <div className="ca-ed__actions"><button type="button" className="ca-btn" onClick={onSignOut}><LuLogOut aria-hidden /> Sign out</button></div>
+        </div>
+        <AdminInbox token={token} demo={demo} onSignOut={onSignOut} onCount={setUnreadBiz} kinds={['contact']} />
       </div>
     </>
   )
