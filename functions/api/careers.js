@@ -3,13 +3,15 @@
  *
  *   GET  /api/careers              → published job openings (public)
  *   GET  /api/careers?all=1        → all openings incl. hidden (needs login token)
- *   POST /api/careers?action=login → { password } → { token }   (token valid 8 hours)
+ *   POST /api/careers?action=login → { password, area? } → { token }   (token valid 8 hours)
+ *                                    area 'business' signs in to Business inquiries only
  *   PUT  /api/careers              → save the full list (needs login token)
  *
  * Cloudflare setup (Workers & Pages → your project → Settings):
  *   Bindings → add KV namespace, variable name: CAREERS_KV
  *   Variables and Secrets → add (type "Secret"):
- *     CAREERS_ADMIN_PASSWORD   the password HR uses to sign in
+ *     CAREERS_ADMIN_PASSWORD   the password HR uses to sign in (jobs + applicants)
+ *     BUSINESS_ADMIN_PASSWORD  the password for /business/admin (business inquiries only)
  *     CAREERS_TOKEN_SECRET     any long random text (signs login sessions)
  */
 const KEY = 'asec:careers:jobs'
@@ -28,14 +30,19 @@ async function sha(s) { return new Uint8Array(await crypto.subtle.digest('SHA-25
 function equalBytes(a, b) { if (a.length !== b.length) return false; let d = 0; for (let i = 0; i < a.length; i++) d |= a[i] ^ b[i]; return d === 0 }
 
 export const secretOf = (env) => env.CAREERS_TOKEN_SECRET || env.CAREERS_ADMIN_PASSWORD || ''
-async function makeToken(env) { const body = `careers.${Date.now() + TOKEN_HOURS * 3600e3}`; return `${body}.${await hmac(secretOf(env), body)}` }
-export async function validToken(env, t) {
-  if (!t || !secretOf(env)) return false
-  const i = t.lastIndexOf('.'); if (i < 0) return false
+/** Tokens are "<role>.<expiry>.<signature>"; role is "careers" (HR) or "business". */
+async function makeToken(env, role = 'careers') { const body = `${role}.${Date.now() + TOKEN_HOURS * 3600e3}`; return `${body}.${await hmac(secretOf(env), body)}` }
+/** Returns the token's role ("careers" | "business"), or '' if the token is missing, forged or expired. */
+export async function tokenRole(env, t) {
+  if (!t || !secretOf(env)) return ''
+  const i = t.lastIndexOf('.'); if (i < 0) return ''
   const body = t.slice(0, i), sig = t.slice(i + 1)
-  if (!equalBytes(enc.encode(sig), enc.encode(await hmac(secretOf(env), body)))) return false
-  const exp = Number(body.split('.')[1]); return Number.isFinite(exp) && exp > Date.now()
+  if (!equalBytes(enc.encode(sig), enc.encode(await hmac(secretOf(env), body)))) return ''
+  const [role, e] = body.split('.'); const exp = Number(e)
+  return Number.isFinite(exp) && exp > Date.now() && (role === 'careers' || role === 'business') ? role : ''
 }
+/** HR (careers) sign-in only. */
+export async function validToken(env, t) { return (await tokenRole(env, t)) === 'careers' }
 
 const clean = (s, n = 400) => String(s ?? '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, n)
 const cleanList = (a) => (Array.isArray(a) ? a : String(a ?? '').split(/;|\n/)).map((x) => clean(x, 300)).filter(Boolean).slice(0, 20)
@@ -72,11 +79,13 @@ export async function onRequest({ request, env }) {
       const tries = Number((await kv.get(lk)) || 0) + 1
       if (tries > 10) return json(429, { error: 'Too many attempts. Try again in 15 minutes.' })
       await kv.put(lk, String(tries), { expirationTtl: 900 })
-      const { password } = await request.json().catch(() => ({}))
-      if (!env.CAREERS_ADMIN_PASSWORD) return json(500, { error: 'The careers password has not been set up yet.' })
-      if (!password || !equalBytes(await sha(password), await sha(env.CAREERS_ADMIN_PASSWORD))) return json(401, { error: 'Incorrect password.' })
+      const { password, area } = await request.json().catch(() => ({}))
+      const role = area === 'business' ? 'business' : 'careers'
+      const expected = role === 'business' ? env.BUSINESS_ADMIN_PASSWORD : env.CAREERS_ADMIN_PASSWORD
+      if (!expected) return json(500, { error: `The ${role} password has not been set up yet.` })
+      if (!password || !equalBytes(await sha(password), await sha(expected))) return json(401, { error: 'Incorrect password.' })
       await kv.delete(lk)
-      return json(200, { token: await makeToken(env), hours: TOKEN_HOURS })
+      return json(200, { token: await makeToken(env, role), hours: TOKEN_HOURS })
     }
 
     if (request.method === 'PUT') {

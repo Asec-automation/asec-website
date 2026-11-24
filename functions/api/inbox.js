@@ -3,6 +3,8 @@
  * sign-up in Cloudflare KV, so nothing depends on email delivery. HR reads them in the careers admin.
  *
  *   POST   /api/inbox              → public: multipart (application + CV) or JSON (contact / alert)
+ *   Access: the HR (careers) login sees applications and job alerts; the business login sees
+ *   business inquiries (contact form) only.
  *   GET    /api/inbox              → list (login token)
  *   GET    /api/inbox?id=ID        → one item with full text (login token)
  *   GET    /api/inbox?cv=ID        → a signed 10-minute link to the CV (login token)
@@ -17,7 +19,7 @@
  * binding named INBOX_EMAIL plus the variables INBOX_FROM (e.g. website@asecautomation.com),
  * INBOX_TO_CONTACT and INBOX_TO_CAREERS. Without them, items are only stored (nothing is lost).
  */
-import { validToken, hmac, secretOf } from './careers.js'
+import { tokenRole, hmac, secretOf } from './careers.js'
 
 const P_ITEM = 'asec:inbox:item:'
 const P_CV = 'asec:inbox:cv:'
@@ -139,8 +141,17 @@ export async function onRequest({ request, env, ctx }) {
     }
 
     const auth = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '')
-    if (!(await validToken(env, auth))) return json(401, { error: 'Please sign in again.' })
+    const role = await tokenRole(env, auth)
+    if (!role) return json(401, { error: 'Please sign in again.' })
+    const allowed = (kind) => (role === 'business' ? kind === 'contact' : kind !== 'contact')
     const id = clean(url.searchParams.get('id') || url.searchParams.get('cv'), 60)
+    let current = null
+    if (id) {
+      const v = await kv.get(P_ITEM + id)
+      if (!v) return json(404, { error: 'Not found.' })
+      current = JSON.parse(v)
+      if (!allowed(current.kind)) return json(404, { error: 'Not found.' })
+    }
 
     if (request.method === 'GET' && url.searchParams.get('cv')) {
       const mode = url.searchParams.get('mode') === 'view' ? 'view' : 'download'
@@ -148,23 +159,19 @@ export async function onRequest({ request, env, ctx }) {
       const sig = await hmac(secretOf(env), `cv.${id}.${exp}.${mode}`)
       return json(200, { url: `${url.pathname}?file=${encodeURIComponent(id)}&exp=${exp}&mode=${mode}&sig=${sig}` })
     }
-    if (request.method === 'GET' && id) {
-      const v = await kv.get(P_ITEM + id)
-      return v ? json(200, { item: JSON.parse(v) }) : json(404, { error: 'Not found.' })
-    }
+    if (request.method === 'GET' && id) return json(200, { item: current })
     if (request.method === 'GET') {
       const items = []; let cursor
       do {
         const page = await kv.list({ prefix: P_ITEM, cursor, limit: 1000 })
-        for (const k of page.keys) items.push({ id: k.name.slice(P_ITEM.length), ...(k.metadata || {}) })
+        for (const k of page.keys) if (allowed(k.metadata?.kind)) items.push({ id: k.name.slice(P_ITEM.length), ...(k.metadata || {}) })
         cursor = page.list_complete ? undefined : page.cursor
       } while (cursor && items.length < 3000)
       items.sort((a, b) => (b.at || 0) - (a.at || 0))
       return json(200, { items })
     }
     if (request.method === 'PATCH' && id) {
-      const v = await kv.get(P_ITEM + id); if (!v) return json(404, { error: 'Not found.' })
-      const it = JSON.parse(v); const b = await request.json().catch(() => ({}))
+      const it = current; const b = await request.json().catch(() => ({}))
       if ('read' in b) it.read = !!b.read
       if ('deleted' in b) { if (b.deleted) { it.deleted = true; it.deletedAt = Date.now() } else { delete it.deleted; delete it.deletedAt } }
       if ('stage' in b) { if (!STAGES.includes(b.stage)) return json(400, { error: 'Unknown stage.' }); it.stage = b.stage; it.stageAt = Date.now() }

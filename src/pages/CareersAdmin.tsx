@@ -29,10 +29,9 @@ export default function CareersAdmin() {
 }
 
 function Workspace({ token, demo, onSignOut }: { token: string; demo: boolean; onSignOut: () => void }) {
-  type Tab = 'jobs' | 'inbox' | 'interviews' | 'accepted' | 'rejected' | 'business' | 'bin'
-  const [tab, setTab] = useState<Tab>(() => { try { const h = location.hash.slice(1) as Tab; return (['inbox', 'interviews', 'accepted', 'rejected', 'business', 'bin'] as string[]).includes(h) ? h : 'jobs' } catch { return 'jobs' } })
+  type Tab = 'jobs' | 'inbox' | 'interviews' | 'accepted' | 'rejected' | 'bin'
+  const [tab, setTab] = useState<Tab>(() => { try { const h = location.hash.slice(1) as Tab; return (['inbox', 'interviews', 'accepted', 'rejected', 'bin'] as string[]).includes(h) ? h : 'jobs' } catch { return 'jobs' } })
   const [unread, setUnread] = useState(0)
-  const [unreadBiz, setUnreadBiz] = useState(0)
   const noop = () => {}
   const T = (k: Tab, icon: React.ReactNode, label: string, badge = 0) => (
     <button type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'is-on' : ''} onClick={() => setTab(k)}>{icon} {label}{badge > 0 && <span className="ca-tabs__n">{badge}</span>}</button>
@@ -54,8 +53,6 @@ function Workspace({ token, demo, onSignOut }: { token: string; demo: boolean; o
         {T('interviews', <LuCalendarDays aria-hidden />, 'Interviews')}
         {T('accepted', <LuUserCheck aria-hidden />, 'Accepted')}
         {T('rejected', <LuUserX aria-hidden />, 'Not accepted')}
-        <span className="ca-tabs__group">Company</span>
-        {T('business', <LuHandshake aria-hidden />, 'Business inquiries', unreadBiz)}
         <span className="ca-tabs__sep" aria-hidden />
         {T('bin', <LuTrash2 aria-hidden />, 'Deleted')}
         <button type="button" className="ca-tabs__out" onClick={onSignOut}><LuLogOut aria-hidden /> Sign out</button>
@@ -78,13 +75,9 @@ function Workspace({ token, demo, onSignOut }: { token: string; demo: boolean; o
         <Head title="Not accepted" text="Candidates who were not selected. Their CVs are kept on file for future openings." />
         <AdminInbox {...common} onCount={noop} kinds={['application']} stages={['rejected']} active={tab === 'rejected'} />
       </div>
-      <div hidden={tab !== 'business'}>
-        <Head title="Business inquiries" text="Messages from the Contact Us form: quote requests, site visits, partnerships and service questions." />
-        <AdminInbox {...common} onCount={setUnreadBiz} kinds={['contact']} active={tab === 'business'} />
-      </div>
       <div hidden={tab !== 'bin'}>
-        <Head title="Deleted" text="Deleted applications, job alerts and business inquiries. Restore an item to put it back where it was, or delete it forever." />
-        <AdminInbox {...common} onCount={noop} active={tab === 'bin'} bin />
+        <Head title="Deleted" text="Deleted applications and job alerts. Restore an item to put it back where it was, or delete it forever." />
+        <AdminInbox {...common} onCount={noop} kinds={['application', 'alert']} active={tab === 'bin'} bin />
       </div>
       </div>
       </div>
@@ -92,16 +85,16 @@ function Workspace({ token, demo, onSignOut }: { token: string; demo: boolean; o
   )
 }
 
-function Login({ onToken, onDemo }: { onToken: (t: string) => void; onDemo: () => void }) {
+function Login({ onToken, onDemo, area = 'careers', title = 'Careers admin', text = 'Sign in to manage job openings and read applications and CVs.' }: { onToken: (t: string) => void; onDemo: () => void; area?: 'careers' | 'business'; title?: string; text?: string }) {
   const [pw, setPw] = useState(''); const [show, setShow] = useState(false)
   const [err, setErr] = useState(''); const [busy, setBusy] = useState(false)
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setErr('')
-    if (!pw) { setErr('Enter the careers password.'); return }
+    if (!pw) { setErr('Enter the password.'); return }
     if (!API_AVAILABLE) { setErr('Sign-in works once the website is online. Use the demo below to see how it looks.'); return }
     setBusy(true)
     try {
-      const r = await fetch(`${CAREERS_API}?action=login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: pw }) })
+      const r = await fetch(`${CAREERS_API}?action=login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(area === 'business' ? { password: pw, area } : { password: pw }) })
       const d = await r.json().catch(() => ({}))
       if (!r.ok) throw new Error(d.error || 'Sign-in failed. Please try again.')
       onToken(d.token)
@@ -111,8 +104,8 @@ function Login({ onToken, onDemo }: { onToken: (t: string) => void; onDemo: () =
   return (
     <div className="ca-login">
       <span className="ca-login__icon"><LuLock aria-hidden /></span>
-      <h1>Careers admin</h1>
-      <p>Sign in to manage job openings and read applications, CVs and messages.</p>
+      <h1>{title}</h1>
+      <p>{text}</p>
       <form onSubmit={submit} noValidate>
         <label htmlFor="ca-pw">Password</label>
         <div className="ca-pw">
@@ -254,6 +247,60 @@ function Editor({ token, demo, onSignOut }: { token: string; demo: boolean; onSi
           })}
         </ol>
       )}
+    </div>
+  )
+}
+
+/* ---------------- Business inquiries: its own sign-in, separate from HR ---------------- */
+const BIZ_KEY = 'asec-business-token'
+const getBiz = () => { try { return sessionStorage.getItem(BIZ_KEY) || '' } catch { return '' } }
+const setBiz = (t: string) => { try { t ? sessionStorage.setItem(BIZ_KEY, t) : sessionStorage.removeItem(BIZ_KEY) } catch {} }
+
+export function BusinessAdmin() {
+  const [token, setTok] = useState('')
+  const [demo, setDemo] = useState(false)
+  useEffect(() => { setTok(getBiz()) }, [])
+  const signOut = () => { setBiz(''); setTok(''); setDemo(false) }
+  return (
+    <section className="ca">
+      <div className="container">
+        {token || demo ? <BusinessWorkspace token={token} demo={demo} onSignOut={signOut} />
+          : <Login area="business" title="Business inquiries" text="Sign in to read messages from the Contact Us form: quote requests, site visits, partnerships and service questions." onToken={(t) => { setBiz(t); setTok(t) }} onDemo={() => setDemo(true)} />}
+      </div>
+    </section>
+  )
+}
+
+function BusinessWorkspace({ token, demo, onSignOut }: { token: string; demo: boolean; onSignOut: () => void }) {
+  type Tab = 'inbox' | 'bin'
+  const [tab, setTab] = useState<Tab>(() => { try { return location.hash === '#bin' ? 'bin' : 'inbox' } catch { return 'inbox' } })
+  const [unread, setUnread] = useState(0)
+  const T = (k: Tab, icon: React.ReactNode, label: string, badge = 0) => (
+    <button type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'is-on' : ''} onClick={() => setTab(k)}>{icon} {label}{badge > 0 && <span className="ca-tabs__n">{badge}</span>}</button>
+  )
+  const Head = ({ title, text }: { title: string; text: string }) => (
+    <div className="ca-ed__head" style={{ marginBottom: 18 }}><div><h1>{title}{demo && <span className="ca-tag">Demo</span>}</h1><p>{text}</p></div></div>
+  )
+  const common = { token, demo, onSignOut }
+  return (
+    <div className="ca-ws">
+      <nav className="ca-tabs" role="tablist" aria-label="Business inquiries sections" aria-orientation="vertical">
+        <span className="ca-tabs__group">Business</span>
+        {T('inbox', <LuHandshake aria-hidden />, 'Business inquiries', unread)}
+        <span className="ca-tabs__sep" aria-hidden />
+        {T('bin', <LuTrash2 aria-hidden />, 'Deleted')}
+        <button type="button" className="ca-tabs__out" onClick={onSignOut}><LuLogOut aria-hidden /> Sign out</button>
+      </nav>
+      <div className="ca-ws__main">
+        <div hidden={tab !== 'inbox'}>
+          <Head title="Business inquiries" text="Messages from the Contact Us form: quote requests, site visits, partnerships and service questions." />
+          <AdminInbox {...common} onCount={setUnread} kinds={['contact']} active={tab === 'inbox'} />
+        </div>
+        <div hidden={tab !== 'bin'}>
+          <Head title="Deleted" text="Deleted business inquiries. Restore one to put it back, or delete it forever." />
+          <AdminInbox {...common} onCount={() => {}} kinds={['contact']} active={tab === 'bin'} bin />
+        </div>
+      </div>
     </div>
   )
 }
