@@ -32,7 +32,7 @@ export function ReplyTemplates({ name, email, position, interview, onSchedule, o
   const mail = useMemo(() => {
     if (kind === 'interview') return {
       subject: `Interview invitation${role ? ` — ${role}` : ''} | ASEC Automation`,
-      body: `Dear ${first},\n\nThank you for applying for ${roleText} at ASEC Automation. We are pleased to invite you to an interview.\n\nDate: ${fmtDate(date) || '[date]'}\nTime: ${fmtTime(time) || '[time]'} (Cairo time)\nInterviewer: ${interviewer || '[interviewer name]'}\nLocation: ASEC Automation head office, ${ADDRESS}${MAP ? `\nMap: ${MAP}` : ''}\nWebsite: www.asecautomation.com\n\nTo learn more about our work before the interview, you are welcome to visit our website.\n\nPlease arrive 10 minutes early, and reply to this email to confirm your attendance. If this time does not suit you, let us know and we will arrange another slot.\n\nWe look forward to meeting you.\n\n${SIGN}`,
+      body: `Dear ${first},\n\nThank you for applying for ${roleText} at ASEC Automation. We are pleased to invite you to an interview.\n\nDate: ${fmtDate(date) || '[date]'}\nTime: ${fmtTime(time) || '[time]'} (Cairo time)\nInterviewer: ${interviewer || '[interviewer name]'}\nLocation: ASEC Automation head office, ${ADDRESS}${MAP ? `\nMap: ${MAP}` : ''}\n\nPlease arrive 10 minutes early, and reply to this email to confirm your attendance. If this time does not suit you, let us know and we will arrange another slot.\n\nWe look forward to meeting you.\n\n${SIGN}`,
       action: 'Open in Outlook & schedule',
     }
     if (kind === 'regret') return {
@@ -85,7 +85,7 @@ export function ReplyTemplates({ name, email, position, interview, onSchedule, o
               <label>Time<input type="time" value={time} onChange={(e) => setTime(e.target.value)} /></label>
               <label>Interviewer name<input type="text" value={interviewer} onChange={(e) => setInterviewer(e.target.value)} placeholder="Full name and title" /></label>
               <label>Interviewer email (CC)<input type="email" value={cc} onChange={(e) => setCc(e.target.value)} placeholder="name@asecautomation.com" /></label>
-              <p className="rt__loc"><LuMapPin aria-hidden /> Location and website are added automatically: ASEC head office, {ADDRESS} · www.asecautomation.com</p>
+              <p className="rt__loc"><LuMapPin aria-hidden /> Location is added automatically: ASEC head office, {ADDRESS}</p>
             </div>
           )}
           {kind === 'offer' && (
@@ -100,7 +100,7 @@ export function ReplyTemplates({ name, email, position, interview, onSchedule, o
             {cc.trim() && <div className="rt__meta"><span>CC</span><b>{cc}</b></div>}
             <div className="rt__meta"><span>Subject</span><b>{mail.subject}</b></div>
             <div className="rt__mail"><pre>{mail.body}</pre>
-              <div className="rt__sig" aria-label="Outlook signature (added automatically)"><img src="/images/brand/logo-dark-full.png" alt="ASEC Automation" /><div><b>Recruitment Team</b><span>ASEC Automation · Careers</span><small>careers@asecautomation.com</small><small>www.asecautomation.com · <em>LinkedIn</em></small></div></div></div>
+              <div className="rt__sig" aria-label="Outlook signature (added automatically)"><img src="/images/brand/logo-dark-full.png" alt="ASEC Automation" /><div><b>Recruitment Team</b><span>ASEC Automation · Careers</span><small>careers@asecautomation.com</small><small>9 Street 286, El-Basatin Sharkeya, Maadi, Cairo, Egypt</small><small>www.asecautomation.com · <em>LinkedIn</em></small></div></div></div>
           </div>
           <div className="rt__actions">
             <button type="button" className="btn btn--blue" onClick={send} disabled={!ready}><LuMail aria-hidden /> {mail.action}</button>
