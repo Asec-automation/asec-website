@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { LuDownload, LuTrash2, LuMail, LuMailOpen, LuRefreshCw, LuFileText, LuBriefcase, LuMessageSquare, LuBell, LuSearch, LuX } from 'react-icons/lu'
+import { LuDownload, LuTrash2, LuUndo2, LuMail, LuMailOpen, LuRefreshCw, LuFileText, LuBriefcase, LuMessageSquare, LuBell, LuSearch, LuX } from 'react-icons/lu'
 import { INBOX_API, API_BASE } from '../content/live-jobs'
 import { ReplyTemplates, fmtDate, fmtTime, type Stage, type Interview } from '../components/ReplyTemplates'
 import { InterviewCalendar } from '../components/InterviewCalendar'
 
 type Kind = 'application' | 'contact' | 'alert'
-interface Summary { id: string; kind: Kind; at: number; read: boolean; name: string; email: string; title: string; cv?: { name: string; size: number }; stage?: Stage; interview?: Interview }
+interface Summary { id: string; kind: Kind; at: number; read: boolean; name: string; email: string; title: string; cv?: { name: string; size: number }; stage?: Stage; interview?: Interview; deleted?: number }
 const STAGE_LABEL: Record<Stage, string> = { new: 'Inbox', interview: 'Interviews', accepted: 'Accepted', rejected: 'Not accepted' }
 interface Full extends Summary { phone?: string; company?: string; country?: string; category?: string; department?: string; position?: string; subject?: string; area?: string; message?: string }
 
@@ -18,8 +18,8 @@ const when = (t: number) => new Date(t).toLocaleString(undefined, { day: 'numeri
 const mb = (n: number) => `${(n / 1024 / 1024).toFixed(2)} MB`
 
 /** The website inbox: every application (with CV), contact message and job-alert sign-up. */
-export function AdminInbox({ token, demo, onSignOut, onCount, kinds = ['application', 'contact', 'alert'], stages, active = true, calendar = false }: { token: string; demo: boolean; onSignOut: () => void; onCount: (n: number) => void; kinds?: Kind[]; stages?: Stage[]; active?: boolean; calendar?: boolean }) {
-  const fits = (i: Summary) => kinds.includes(i.kind) && (i.kind !== 'application' || !stages || stages.includes(i.stage || 'new'))
+export function AdminInbox({ token, demo, onSignOut, onCount, kinds = ['application', 'contact', 'alert'], stages, active = true, calendar = false, bin = false }: { token: string; demo: boolean; onSignOut: () => void; onCount: (n: number) => void; kinds?: Kind[]; stages?: Stage[]; active?: boolean; calendar?: boolean; bin?: boolean }) {
+  const fits = (i: Summary) => (bin ? !!i.deleted : !i.deleted) && kinds.includes(i.kind) && (bin || (i.kind !== 'application' || !stages || stages.includes(i.stage || 'new')))
   const keep = (l: Summary[]) => l.filter(fits)
   const [day, setDay] = useState('')
   const business = kinds.length === 1 && kinds[0] === 'contact'
@@ -96,8 +96,13 @@ export function AdminInbox({ token, demo, onSignOut, onCount, kinds = ['applicat
       if (r.ok) setFull((f) => ({ ...f, [it.id]: d.item }))
     }
   }
-  const remove = async (it: Summary) => {
-    if (!window.confirm(`Delete this ${KIND[it.kind].label.toLowerCase()} from ${it.name || it.email}?${it.cv ? ' The CV will be deleted too.' : ''}`)) return
+  /** Delete moves the item to the Deleted bin; it can be restored from there or deleted forever. */
+  const setDeleted = async (it: Summary, deleted: boolean) => {
+    setItems((l) => l.filter((i) => i.id !== it.id)); setOpen(null)
+    if (!demo) await fetch(`${INBOX_API}?id=${encodeURIComponent(it.id)}`, { method: 'PATCH', headers: { ...auth, 'Content-Type': 'application/json' }, body: JSON.stringify({ deleted }) }).catch(() => {})
+  }
+  const purge = async (it: Summary) => {
+    if (!window.confirm(`Delete this ${KIND[it.kind].label.toLowerCase()} from ${it.name || it.email} forever?${it.cv ? ' The CV will be deleted too.' : ''} This cannot be undone.`)) return
     setItems((l) => l.filter((i) => i.id !== it.id)); setOpen(null)
     if (!demo) await fetch(`${INBOX_API}?id=${encodeURIComponent(it.id)}`, { method: 'DELETE', headers: auth }).catch(() => {})
   }
@@ -122,7 +127,7 @@ export function AdminInbox({ token, demo, onSignOut, onCount, kinds = ['applicat
         <div className="ib__filters" role="tablist" aria-label="Filter inbox">
           {kinds.length > 1 && (['all', ...kinds] as const).map((k) => (
             <button key={k} type="button" role="tab" aria-selected={filter === k} className={filter === k ? 'is-on' : ''} onClick={() => setFilter(k)}>
-              {k === 'all' ? `All (${items.length})` : `${KIND[k].label}s (${count(k)})`}
+              {k === 'all' ? `All (${items.length})` : `${KIND[k].label.replace(/y$/, 'ie')}s (${count(k)})`}
             </button>
           ))}
         </div>
@@ -148,7 +153,7 @@ export function AdminInbox({ token, demo, onSignOut, onCount, kinds = ['applicat
       {err && <p className="ca-msg ca-msg--err">{err}</p>}
       {loading ? <p className="muted">Loading inbox…</p> : shown.length === 0 ? (
         (q || position) && items.length ? <div className="ca-empty"><h2>No matches</h2><p>Nothing matches your search. Try another job title or clear the search.</p></div>
-        : <div className="ca-empty"><h2>Nothing here yet</h2><p>{business ? 'Messages sent through the Contact Us form (quotes, site visits, partnership and service questions) appear here.' : stages && !stages.includes('new') ? `Applications moved to ${stages.map((x) => STAGE_LABEL[x]).join(' / ')} appear here.` : 'New job applications and job-alert sign-ups from the website appear here.'}</p></div>
+        : <div className="ca-empty"><h2>Nothing here yet</h2><p>{bin ? 'Deleted applications and messages appear here. Restore them, or delete them forever.' : business ? 'Messages sent through the Contact Us form (quotes, site visits, partnership and service questions) appear here.' : stages && !stages.includes('new') ? `Applications moved to ${stages.map((x) => STAGE_LABEL[x]).join(' / ')} appear here.` : 'New job applications and job-alert sign-ups from the website appear here.'}</p></div>
       ) : (
         <ul className="ib__list">
           {shown.map((it) => {
@@ -159,7 +164,7 @@ export function AdminInbox({ token, demo, onSignOut, onCount, kinds = ['applicat
                   <span className={`ib__kind ib__kind--${it.kind}`}>{KIND[it.kind].icon}</span>
                   <span className="ib__main"><strong>{it.name || it.email}</strong><span>{KIND[it.kind].label}{it.title ? ` · ${it.title}` : ''}</span>{it.interview && it.stage === 'interview' && <span className="ib__iv">Interview · {fmtDate(it.interview.date)}, {fmtTime(it.interview.time)} · {it.interview.interviewer}</span>}</span>
                   {it.cv && <span className="ib__cv"><LuFileText aria-hidden /> CV</span>}
-                  <time className="ib__time">{when(it.at)}</time>
+                  <time className="ib__time">{bin && it.deleted && it.deleted > 1 ? `Deleted ${when(it.deleted)}` : when(it.at)}</time>
                 </button>
                 {isOpen && (
                   <div className="ib__body">
@@ -175,13 +180,13 @@ export function AdminInbox({ token, demo, onSignOut, onCount, kinds = ['applicat
                       {f?.subject && <><dt>Subject</dt><dd>{f.subject}</dd></>}
                       {f?.area && <><dt>Interested in</dt><dd>{f.area}</dd></>}
                       <dt>Received</dt><dd>{when(it.at)}</dd>
-                      {it.kind === 'application' && <><dt>Status</dt><dd>{STAGE_LABEL[it.stage || 'new']}</dd></>}
+                      {it.kind === 'application' && <><dt>Status</dt><dd>{STAGE_LABEL[it.stage || 'new']}{bin ? ' (restores here)' : ''}</dd></>}
                       {it.interview && <><dt>Interview</dt><dd>{fmtDate(it.interview.date)}, {fmtTime(it.interview.time)} · {it.interview.interviewer}</dd></>}
                     </dl>
                     {f?.message && <div className="ib__msg">{f.message}</div>}
                     {!f && <p className="muted">Loading…</p>}
-                    {it.kind === 'application' && <ReplyTemplates name={f?.name || it.name} email={it.email} position={f?.position || it.title} interview={it.interview} onSchedule={(iv) => setStage(it, 'interview', iv)} onMove={(st) => setStage(it, st)} />}
-                    {it.kind === 'application' && (
+                    {it.kind === 'application' && !bin && <ReplyTemplates name={f?.name || it.name} email={it.email} position={f?.position || it.title} interview={it.interview} onSchedule={(iv) => setStage(it, 'interview', iv)} onMove={(st) => setStage(it, st)} />}
+                    {it.kind === 'application' && !bin && (
                       <div className="ib__move"><span>Move to:</span>{(['new', 'interview', 'accepted', 'rejected'] as Stage[]).map((st) => (
                         <button key={st} type="button" className={(it.stage || 'new') === st ? 'is-on' : ''} disabled={(it.stage || 'new') === st} onClick={() => setStage(it, st)}>{STAGE_LABEL[st]}</button>
                       ))}</div>
@@ -191,7 +196,10 @@ export function AdminInbox({ token, demo, onSignOut, onCount, kinds = ['applicat
                       {it.cv && <button type="button" className="btn btn--outline" onClick={() => openCv(it, 'download')}><LuDownload aria-hidden /> Download CV <small>({it.cv.name} · {mb(it.cv.size)})</small></button>}
                       <a className="btn btn--outline" href={`mailto:${it.email}?subject=${encodeURIComponent(it.kind === 'application' ? `Your application to ASEC Automation${it.title ? ` — ${it.title}` : ''}` : 'Re: your message to ASEC Automation')}`}><LuMail aria-hidden /> Reply by email</a>
                       <button type="button" className="ca-btn" onClick={() => setRead(it.id, !it.read)}>{it.read ? <><LuMail aria-hidden /> Mark as unread</> : <><LuMailOpen aria-hidden /> Mark as read</>}</button>
-                      <button type="button" className="ca-btn is-danger" onClick={() => remove(it)}><LuTrash2 aria-hidden /> Delete</button>
+                      {bin ? <>
+                        <button type="button" className="ca-btn" onClick={() => setDeleted(it, false)}><LuUndo2 aria-hidden /> Restore</button>
+                        <button type="button" className="ca-btn is-danger" onClick={() => purge(it)}><LuTrash2 aria-hidden /> Delete forever</button>
+                      </> : <button type="button" className="ca-btn is-danger" onClick={() => setDeleted(it, true)}><LuTrash2 aria-hidden /> Delete</button>}
                     </div>
                   </div>
                 )}

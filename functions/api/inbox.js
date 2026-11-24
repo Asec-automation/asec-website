@@ -7,10 +7,11 @@
  *   GET    /api/inbox?id=ID        → one item with full text (login token)
  *   GET    /api/inbox?cv=ID        → a signed 10-minute link to the CV (login token)
  *   GET    /api/inbox?file=…&sig=… → the CV file itself (signed link)
- *   PATCH  /api/inbox?id=ID        → { read?, stage?, interview? } (login token)
+ *   PATCH  /api/inbox?id=ID        → { read?, stage?, interview?, deleted? } (login token)
+ *                                    deleted: true moves it to the Deleted bin, false restores it
  *                                    stage: new | interview | accepted | rejected
  *                                    interview: { date: 'YYYY-MM-DD', time: 'HH:MM', interviewer }
- *   DELETE /api/inbox?id=ID        → delete item and CV (login token)
+ *   DELETE /api/inbox?id=ID        → delete item and CV permanently (login token)
  *
  * Optional email copy: once asecautomation.com uses Cloudflare Email Routing, add a "send_email"
  * binding named INBOX_EMAIL plus the variables INBOX_FROM (e.g. website@asecautomation.com),
@@ -33,6 +34,7 @@ const summary = (it) => ({
   title: clean(it.position || it.subject || it.area || '', 120),
   cv: it.cv ? { name: clean(it.cv.name, 100), size: it.cv.size } : undefined,
   stage: it.stage || undefined,
+  deleted: it.deleted ? it.deletedAt || 1 : undefined,
   interview: it.interview ? { date: it.interview.date, time: it.interview.time, interviewer: clean(it.interview.interviewer, 60) } : undefined,
 })
 const STAGES = ['new', 'interview', 'accepted', 'rejected']
@@ -164,6 +166,7 @@ export async function onRequest({ request, env, ctx }) {
       const v = await kv.get(P_ITEM + id); if (!v) return json(404, { error: 'Not found.' })
       const it = JSON.parse(v); const b = await request.json().catch(() => ({}))
       if ('read' in b) it.read = !!b.read
+      if ('deleted' in b) { if (b.deleted) { it.deleted = true; it.deletedAt = Date.now() } else { delete it.deleted; delete it.deletedAt } }
       if ('stage' in b) { if (!STAGES.includes(b.stage)) return json(400, { error: 'Unknown stage.' }); it.stage = b.stage; it.stageAt = Date.now() }
       if ('interview' in b) {
         const iv = b.interview

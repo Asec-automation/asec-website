@@ -29,8 +29,8 @@ export default function CareersAdmin() {
 }
 
 function Workspace({ token, demo, onSignOut }: { token: string; demo: boolean; onSignOut: () => void }) {
-  type Tab = 'jobs' | 'inbox' | 'interviews' | 'accepted' | 'rejected' | 'business'
-  const [tab, setTab] = useState<Tab>(() => { try { const h = location.hash.slice(1) as Tab; return (['inbox', 'interviews', 'accepted', 'rejected', 'business'] as string[]).includes(h) ? h : 'jobs' } catch { return 'jobs' } })
+  type Tab = 'jobs' | 'inbox' | 'interviews' | 'accepted' | 'rejected' | 'business' | 'bin'
+  const [tab, setTab] = useState<Tab>(() => { try { const h = location.hash.slice(1) as Tab; return (['inbox', 'interviews', 'accepted', 'rejected', 'business', 'bin'] as string[]).includes(h) ? h : 'jobs' } catch { return 'jobs' } })
   const [unread, setUnread] = useState(0)
   const [unreadBiz, setUnreadBiz] = useState(0)
   const noop = () => {}
@@ -53,6 +53,7 @@ function Workspace({ token, demo, onSignOut }: { token: string; demo: boolean; o
         {T('accepted', <LuUserCheck aria-hidden />, 'Accepted')}
         {T('rejected', <LuUserX aria-hidden />, 'Not accepted')}
         {T('business', <LuHandshake aria-hidden />, 'Business inquiries', unreadBiz)}
+        {T('bin', <LuTrash2 aria-hidden />, 'Deleted')}
       </div>
       <div hidden={tab !== 'jobs'}><Editor token={token} demo={demo} onSignOut={onSignOut} /></div>
       <div hidden={tab !== 'inbox'}>
@@ -74,6 +75,10 @@ function Workspace({ token, demo, onSignOut }: { token: string; demo: boolean; o
       <div hidden={tab !== 'business'}>
         <Head title="Business inquiries" text="Messages from the Contact Us form: quote requests, site visits, partnerships and service questions." />
         <AdminInbox {...common} onCount={setUnreadBiz} kinds={['contact']} active={tab === 'business'} />
+      </div>
+      <div hidden={tab !== 'bin'}>
+        <Head title="Deleted" text="Deleted applications, job alerts and business inquiries. Restore an item to put it back where it was, or delete it forever." />
+        <AdminInbox {...common} onCount={noop} active={tab === 'bin'} bin />
       </div>
     </>
   )
