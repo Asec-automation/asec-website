@@ -3,8 +3,9 @@
  *
  *   GET  /api/careers              → published job openings (public)
  *   GET  /api/careers?all=1        → all openings incl. hidden (needs login token)
- *   POST /api/careers?action=login → { password, area? } → { token }   (token valid 8 hours)
- *                                    area 'business' signs in to Business inquiries only
+ *   POST /api/careers?action=login → { username, password } → { token, role }   (token valid 8 hours)
+ *                                    username "hr" → careers (jobs + applicants)
+ *                                    username "business" → business inquiries only
  *   PUT  /api/careers              → save the full list (needs login token)
  *
  * Cloudflare setup (Workers & Pages → your project → Settings):
@@ -79,13 +80,14 @@ export async function onRequest({ request, env }) {
       const tries = Number((await kv.get(lk)) || 0) + 1
       if (tries > 10) return json(429, { error: 'Too many attempts. Try again in 15 minutes.' })
       await kv.put(lk, String(tries), { expirationTtl: 900 })
-      const { password, area } = await request.json().catch(() => ({}))
-      const role = area === 'business' ? 'business' : 'careers'
-      const expected = role === 'business' ? env.BUSINESS_ADMIN_PASSWORD : env.CAREERS_ADMIN_PASSWORD
-      if (!expected) return json(500, { error: `The ${role} password has not been set up yet.` })
-      if (!password || !equalBytes(await sha(password), await sha(expected))) return json(401, { error: 'Incorrect password.' })
+      const { username, password, area } = await request.json().catch(() => ({}))
+      const u = String(username ?? '').trim().toLowerCase()
+      const role = u ? ({ hr: 'careers', business: 'business' })[u] : area === 'business' ? 'business' : 'careers'
+      const expected = role === 'business' ? env.BUSINESS_ADMIN_PASSWORD : role === 'careers' ? env.CAREERS_ADMIN_PASSWORD : ''
+      if (role && !expected) return json(500, { error: 'This account has not been set up yet.' })
+      if (!role || !password || !equalBytes(await sha(password), await sha(expected))) return json(401, { error: 'Incorrect username or password.' })
       await kv.delete(lk)
-      return json(200, { token: await makeToken(env, role), hours: TOKEN_HOURS })
+      return json(200, { token: await makeToken(env, role), role, hours: TOKEN_HOURS })
     }
 
     if (request.method === 'PUT') {

@@ -186,6 +186,7 @@ export function Footer() {
             <Link to="/privacy">Privacy Policy</Link>
             <Link to="/terms">Terms of Use</Link>
             <Link to="/cookies">Cookie Preferences</Link>
+            <Link to="/login">Staff login</Link>
           </nav>
         </div>
       </div>

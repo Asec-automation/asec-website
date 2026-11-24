@@ -10,10 +10,11 @@ import { services } from './content/expertise'
 
 export interface RouteDef { path: string; title: string; description: string; render: () => React.ReactNode; image?: string; type?: 'website' | 'article'; noindex?: boolean }
 
-import CareersAdmin, { BusinessAdmin } from './pages/CareersAdmin'
+import CareersAdmin, { BusinessAdmin, StaffLoginPage } from './pages/CareersAdmin'
 
 const base: RouteDef[] = [
   { path: '/careers/admin', title: 'Careers admin', description: 'Sign in to manage job openings.', render: () => <CareersAdmin />, noindex: true },
+  { path: '/login', title: 'Staff sign-in', description: 'Sign-in for ASEC staff.', render: () => <StaffLoginPage />, noindex: true },
   { path: '/business/admin', title: 'Business inquiries', description: 'Sign in to read business inquiries.', render: () => <BusinessAdmin />, noindex: true },
   { path: '/', title: 'ASEC Automation — Engineering Intelligence. Automating Industry.', description: 'Industrial automation, process control and engineering expertise with a strong focus on cement plant automation.', render: () => <Home /> },
   { path: '/about', title: 'About ASEC', description: 'Who we are: engineering and automation expertise for industrial operations.', render: () => <About /> },

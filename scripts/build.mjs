@@ -156,7 +156,7 @@ if (SINGLE) {
   fs.cpSync(path.join(root, 'public'), out, { recursive: true })
   const pub = indexable
   fs.writeFileSync(path.join(out, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${pub.map((p) => `  <url><loc>${siteUrl}${p}</loc></url>`).join('\n')}\n</urlset>\n`)
-  fs.writeFileSync(path.join(out, 'robots.txt'), `User-agent: *\nAllow: /\nDisallow: /careers/admin\nDisallow: /business/admin\nDisallow: /api/\nSitemap: ${siteUrl}/sitemap.xml\n`)
+  fs.writeFileSync(path.join(out, 'robots.txt'), `User-agent: *\nAllow: /\nDisallow: /careers/admin\nDisallow: /business/admin\nDisallow: /login\nDisallow: /api/\nSitemap: ${siteUrl}/sitemap.xml\n`)
   // GitHub Pages: custom domain + no Jekyll processing
   fs.writeFileSync(path.join(out, 'CNAME'), new URL(siteUrl).hostname + '\n')
   fs.writeFileSync(path.join(out, '.nojekyll'), '')

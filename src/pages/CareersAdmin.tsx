@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { LuLock, LuLogOut, LuPlus, LuTrash2, LuEye, LuEyeOff, LuArrowUp, LuArrowDown, LuUpload, LuDownload, LuSave, LuCircleCheck, LuTriangleAlert, LuInbox, LuBriefcase, LuHandshake, LuCalendarDays, LuUserCheck, LuUserX } from 'react-icons/lu'
 import { AdminInbox } from './AdminInbox'
-import { Link } from '../lib/router'
+import { Link, useRouter } from '../lib/router'
 import { API_AVAILABLE, CAREERS_API, csvToJobs, jobsToCsv, slugify, type EditableJob } from '../content/live-jobs'
 
 const TOKEN_KEY = 'asec-careers-token'
@@ -22,7 +22,7 @@ export default function CareersAdmin() {
   return (
     <section className="ca">
       <div className="container">
-        {token || demo ? <Workspace token={token} demo={demo} onSignOut={signOut} /> : <Login onToken={(t) => { setToken(t); setTok(t) }} onDemo={() => setDemo(true)} />}
+        {token || demo ? <Workspace token={token} demo={demo} onSignOut={signOut} /> : <StaffLogin page="careers" onToken={(t) => setTok(t)} onDemo={() => setDemo(true)} />}
       </div>
     </section>
   )
@@ -85,28 +85,36 @@ function Workspace({ token, demo, onSignOut }: { token: string; demo: boolean; o
   )
 }
 
-function Login({ onToken, onDemo, area = 'careers', title = 'Careers admin', text = 'Sign in to manage job openings and read applications and CVs.' }: { onToken: (t: string) => void; onDemo: () => void; area?: 'careers' | 'business'; title?: string; text?: string }) {
+/** One staff sign-in for the whole website: username "hr" opens the careers admin, "business" opens business inquiries. */
+export function StaffLogin({ page, onToken, onDemo }: { page?: 'careers' | 'business'; onToken?: (t: string) => void; onDemo?: () => void }) {
+  const { navigate } = useRouter()
+  const [user, setUser] = useState(page === 'business' ? 'business' : page === 'careers' ? 'hr' : '')
   const [pw, setPw] = useState(''); const [show, setShow] = useState(false)
   const [err, setErr] = useState(''); const [busy, setBusy] = useState(false)
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setErr('')
-    if (!pw) { setErr('Enter the password.'); return }
-    if (!API_AVAILABLE) { setErr('Sign-in works once the website is online. Use the demo below to see how it looks.'); return }
+    if (!user.trim() || !pw) { setErr('Enter your username and password.'); return }
+    if (!API_AVAILABLE) { setErr('Sign-in works once the website is online.'); return }
     setBusy(true)
     try {
-      const r = await fetch(`${CAREERS_API}?action=login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(area === 'business' ? { password: pw, area } : { password: pw }) })
+      const r = await fetch(`${CAREERS_API}?action=login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: user.trim(), password: pw }) })
       const d = await r.json().catch(() => ({}))
       if (!r.ok) throw new Error(d.error || 'Sign-in failed. Please try again.')
-      onToken(d.token)
+      const role: 'careers' | 'business' = d.role === 'business' ? 'business' : 'careers'
+      if (role === 'business') setBiz(d.token); else setToken(d.token)
+      if (role === page && onToken) onToken(d.token)
+      else navigate(role === 'business' ? '/business/admin' : '/careers/admin')
     } catch (x) { setErr((x as Error).message === 'Failed to fetch' ? 'Couldn’t reach the server. Check your connection and try again.' : (x as Error).message) }
     finally { setBusy(false) }
   }
   return (
     <div className="ca-login">
       <span className="ca-login__icon"><LuLock aria-hidden /></span>
-      <h1>{title}</h1>
-      <p>{text}</p>
+      <h1>Staff sign-in</h1>
+      <p>For ASEC staff only. HR signs in to manage jobs and applicants; the business team signs in to read business inquiries.</p>
       <form onSubmit={submit} noValidate>
+        <label htmlFor="ca-user">Username</label>
+        <input id="ca-user" className="ca-user" type="text" autoComplete="username" autoCapitalize="none" spellCheck={false} value={user} onChange={(e) => { setUser(e.target.value); setErr('') }} />
         <label htmlFor="ca-pw">Password</label>
         <div className="ca-pw">
           <input id="ca-pw" type={show ? 'text' : 'password'} autoComplete="current-password" value={pw} onChange={(e) => { setPw(e.target.value); setErr('') }} aria-invalid={!!err || undefined} aria-describedby={err ? 'ca-err' : undefined} />
@@ -115,10 +123,14 @@ function Login({ onToken, onDemo, area = 'careers', title = 'Careers admin', tex
         {err && <p className="ca-err" id="ca-err" role="alert">{err}</p>}
         <button className="btn btn--primary" type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
       </form>
-      {!API_AVAILABLE && <button type="button" className="ca-demo" onClick={onDemo}>Open the demo (preview only — nothing is saved)</button>}
-      {area === 'business' ? <Link to="/contact" className="ca-back">← Back to Contact Us</Link> : <Link to="/careers" className="ca-back">← Back to Careers</Link>}
+      {!API_AVAILABLE && onDemo && <button type="button" className="ca-demo" onClick={onDemo}>Open the demo (preview only — nothing is saved)</button>}
+      <Link to="/" className="ca-back">← Back to the website</Link>
     </div>
   )
+}
+
+export function StaffLoginPage() {
+  return <section className="ca"><div className="container"><StaffLogin /></div></section>
 }
 
 function Editor({ token, demo, onSignOut }: { token: string; demo: boolean; onSignOut: () => void }) {
@@ -265,7 +277,7 @@ export function BusinessAdmin() {
     <section className="ca">
       <div className="container">
         {token || demo ? <BusinessWorkspace token={token} demo={demo} onSignOut={signOut} />
-          : <Login area="business" title="Business inquiries" text="Sign in to read messages from the Contact Us form: quote requests, site visits, partnerships and service questions." onToken={(t) => { setBiz(t); setTok(t) }} onDemo={() => setDemo(true)} />}
+          : <StaffLogin page="business" onToken={(t) => setTok(t)} onDemo={() => setDemo(true)} />}
       </div>
     </section>
   )

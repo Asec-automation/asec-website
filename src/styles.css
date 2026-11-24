@@ -1975,3 +1975,5 @@ html[lang="ar"] .hero__title { line-height: 1.25; letter-spacing: 0; }
   .ca-tabs__group, .ca-tabs__sep { display: none; }
 }
 .ca-ws .ca-tabs .ca-tabs__out { margin-top: 6px; color: #8a93a8; font-weight: 600; }
+.ca-user { height: 48px; padding: 0 14px; border: 1px solid #d3dbe7; border-radius: 12px; font: inherit; font-size: 16px; background: #fff; outline: none; }
+.ca-user:focus, .ca-pw:focus-within { border-color: var(--blue, #1C75BC); box-shadow: 0 0 0 3px rgba(28,117,188,.15); }
