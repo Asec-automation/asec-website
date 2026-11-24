@@ -1897,3 +1897,9 @@ html[lang="ar"] .hero__title { line-height: 1.25; letter-spacing: 0; }
 .job-tab__body { display: grid; gap: 16px; padding: 22px 26px 26px; }
 .job-tab__head:focus-visible { outline: 3px solid #1C75BC; outline-offset: -3px; }
 @media (max-width: 600px) { .job-tab__head { padding: 18px; } .job-tab__body { padding: 18px; } }
+
+/* Client logo badge on homepage featured-project tiles */
+.tile__logo { position: absolute; top: 18px; left: 18px; z-index: 2; width: 132px; height: 80px; border-radius: 14px; background: #fff; overflow: hidden; box-shadow: 0 8px 24px rgba(4,15,71,.25); }
+.tile__logo img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.3); }
+html[dir="rtl"] .tile__logo { left: auto; right: 18px; }
+@media (max-width: 760px) { .tile__logo { width: 112px; height: 68px; top: 14px; left: 14px; } }
