@@ -1977,3 +1977,7 @@ html[lang="ar"] .hero__title { line-height: 1.25; letter-spacing: 0; }
 .ca-ws .ca-tabs .ca-tabs__out { margin-top: 6px; color: #8a93a8; font-weight: 600; }
 .ca-user { height: 48px; padding: 0 14px; border: 1px solid #d3dbe7; border-radius: 12px; font: inherit; font-size: 16px; background: #fff; outline: none; }
 .ca-user:focus, .ca-pw:focus-within { border-color: var(--blue, #1C75BC); box-shadow: 0 0 0 3px rgba(28,117,188,.15); }
+.rt__sig { display:flex; align-items:center; gap:14px; margin-top:10px; padding-top:4px; }
+.rt__mail .rt__sig img { width:150px; height:auto; margin:0; }
+.rt__sig > div { border-left:2px solid #C11718; padding-left:14px; display:grid; line-height:1.35; }
+.rt__sig b { color:#040F47; font-size:14px; } .rt__sig span { color:#1C75BC; font-size:12.5px; font-weight:600; } .rt__sig small { color:#5b6478; font-size:11.5px; } .rt__sig em { color:#0A66C2; font-style:normal; font-weight:600; }
