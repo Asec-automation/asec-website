@@ -60,14 +60,13 @@ function FeaturedProjects() {
             text="Approved project case studies — with scope, technologies and results — will appear here. No project is shown until it has been reviewed and approved for publication, including client-name permission."
             skeleton />
         ) : (
-          <div className="grid grid-3">{featured.map((p) => (
-            <Link key={p.slug} to={`/projects#${p.slug}`} className="tile reveal" style={{ aspectRatio: '4/5' }}>
-              {p.photo ? <div className="media"><img src={p.photo} {...responsive(p.photo)} alt="" loading="lazy" style={{ objectPosition: p.photoFocus }} /></div> : <Img id={p.image} size="compact" />}
+          <div className="grid grid-3">{featured.map((p) => { const logo = p.clientVisible ? p.photos?.find((x) => x.includes('/logos/')) : undefined; return (
+            <Link key={p.slug} to={`/projects#${p.slug}`} className={`tile reveal${logo ? ' tile--logo' : ''}`} style={{ aspectRatio: '4/5' }}>
+              {logo ? <div className="media media--logo"><img src={logo} alt={`${p.clientName} logo`} loading="lazy" /></div> : p.photo ? <div className="media"><img src={p.photo} {...responsive(p.photo)} alt="" loading="lazy" style={{ objectPosition: p.photoFocus }} /></div> : <Img id={p.image} size="compact" />}
               {p.illustrative && <span className="illus-tag">Illustration</span>}
-              {(() => { const logo = p.photos?.find((x) => x.includes('/logos/')); return logo && p.clientVisible ? <span className="tile__logo"><img src={logo} alt={`${p.clientName} logo`} loading="lazy" /></span> : null })()}
               <div className="tile__body"><span className="eyebrow" style={{ color: 'var(--cyan)' }}>{[p.clientVisible && p.clientName, p.country, p.period ?? p.year].filter(Boolean).join(' · ')}</span><h3 className="h3">{p.title}</h3><p>{p.summary}</p></div>
             </Link>
-          ))}</div>
+          )})}</div>
         )}
       </div>
     </section>
