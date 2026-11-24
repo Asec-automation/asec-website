@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { LuDownload, LuTrash2, LuMail, LuMailOpen, LuRefreshCw, LuFileText, LuBriefcase, LuMessageSquare, LuBell } from 'react-icons/lu'
+import { LuDownload, LuTrash2, LuMail, LuMailOpen, LuRefreshCw, LuFileText, LuBriefcase, LuMessageSquare, LuBell, LuSearch, LuX } from 'react-icons/lu'
 import { INBOX_API, API_BASE } from '../content/live-jobs'
 
 type Kind = 'application' | 'contact' | 'alert'
@@ -21,6 +21,8 @@ export function AdminInbox({ token, demo, onSignOut, onCount }: { token: string;
   const [err, setErr] = useState('')
   const [filter, setFilter] = useState<'all' | Kind>('all')
   const [open, setOpen] = useState<string | null>(null)
+  const [q, setQ] = useState('')
+  const [position, setPosition] = useState('')
   const [full, setFull] = useState<Record<string, Full>>({})
   const auth = { Authorization: `Bearer ${token}` }
 
@@ -41,7 +43,24 @@ export function AdminInbox({ token, demo, onSignOut, onCount }: { token: string;
   useEffect(load, [token, demo])
   useEffect(() => { onCount(items.filter((i) => !i.read).length) }, [items])
 
-  const shown = useMemo(() => items.filter((i) => filter === 'all' || i.kind === filter), [items, filter])
+  /** Job titles people applied for, with counts, so HR can see everyone who applied to one role. */
+  const positions = useMemo(() => {
+    const m = new Map<string, number>()
+    items.filter((i) => i.kind === 'application').forEach((i) => { const t = (i.title || 'Open application').trim(); m.set(t, (m.get(t) || 0) + 1) })
+    return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+  }, [items])
+  const norm = (t: string) => t.toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[–—]/g, '-')
+  const shown = useMemo(() => {
+    const words = norm(q).split(/\s+/).filter(Boolean)
+    return items.filter((i) => {
+      if (filter !== 'all' && i.kind !== filter) return false
+      if (position && (i.kind !== 'application' || (i.title || 'Open application').trim() !== position)) return false
+      if (!words.length) return true
+      const hay = norm(`${i.title} ${i.name} ${i.email} ${KIND[i.kind].label}`)
+      return words.every((w) => hay.includes(w))
+    })
+  }, [items, filter, q, position])
+  const pickPosition = (t: string) => { setPosition((p) => (p === t ? '' : t)); setFilter('application') }
   const count = (k: Kind) => items.filter((i) => i.kind === k).length
 
   const setRead = async (id: string, read: boolean) => {
@@ -91,9 +110,25 @@ export function AdminInbox({ token, demo, onSignOut, onCount }: { token: string;
         </div>
         <button type="button" className="ca-btn" onClick={load}><LuRefreshCw aria-hidden /> Refresh</button>
       </div>
+      <div className="ib__search" role="search">
+        <LuSearch aria-hidden />
+        <label className="sr-only" htmlFor="ib-q">Search the inbox</label>
+        <input id="ib-q" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by job title, name or email — e.g. “Procurement Engineer”" autoComplete="off" />
+        {(q || position) && <button type="button" className="ib__clear" onClick={() => { setQ(''); setPosition('') }}><LuX aria-hidden /> Clear</button>}
+      </div>
+      {positions.length > 0 && (filter === 'all' || filter === 'application') && (
+        <div className="ib__positions" aria-label="Applications by job title">
+          <span className="ib__positions-label">Applied for:</span>
+          {positions.map(([t, n]) => (
+            <button key={t} type="button" className={position === t ? 'is-on' : ''} aria-pressed={position === t} onClick={() => pickPosition(t)}>{t} <b>{n}</b></button>
+          ))}
+        </div>
+      )}
+      {(q || position) && !loading && <p className="ib__result">{shown.length} {shown.length === 1 ? 'result' : 'results'}{position ? ` for “${position}”` : ''}{q ? ` matching “${q}”` : ''}</p>}
       {err && <p className="ca-msg ca-msg--err">{err}</p>}
       {loading ? <p className="muted">Loading inbox…</p> : shown.length === 0 ? (
-        <div className="ca-empty"><h2>Nothing here yet</h2><p>New job applications, contact messages and job-alert sign-ups from the website appear here.</p></div>
+        (q || position) && items.length ? <div className="ca-empty"><h2>No matches</h2><p>Nothing matches your search. Try another job title or clear the search.</p></div>
+        : <div className="ca-empty"><h2>Nothing here yet</h2><p>New job applications, contact messages and job-alert sign-ups from the website appear here.</p></div>
       ) : (
         <ul className="ib__list">
           {shown.map((it) => {
