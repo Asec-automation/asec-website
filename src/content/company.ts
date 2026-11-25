@@ -31,15 +31,15 @@ export const company = {
     hrEmail: 'careers@asecautomation.com',
     phone: '+20 106 564 8082',
     phoneHref: '+201065648082',
-    address: '9 Street 286, El-Basatin Sharkeya, Maadi, Cairo 4234220, Egypt',
+    address: '9 Street 286, New Maadi, Cairo 4234220, Egypt',
     website: 'www.asecautomation.com',
     status: 'confirmed' as Status,
   },
   offices: [
-    { country: 'Egypt', label: 'Head office', address: '9 Street 286, El-Basatin Sharkeya, Maadi, Cairo 4234220, Egypt', mapUrl: 'https://share.google/eQS8scbe6vybANS2W' },
+    { country: 'Egypt', label: 'Head office', address: '9 Street 286, New Maadi, Cairo 4234220, Egypt', mapUrl: 'https://share.google/eQS8scbe6vybANS2W' },
     { country: 'UAE', label: 'Branch', address: 'Al Jazeera Al Hamra, Ras Al Khaimah 31291, UAE' },
-    { country: 'Saudi Arabia', label: 'Branch — ASA (Saudi)', address: '' },
-    { country: 'Libya', label: 'Branch', address: '' },
+    { country: 'Saudi Arabia', label: 'ASA Branch', address: 'Office DH-49, Floor 2, Distinction Hub, Smart Tower, King Fahd Branch Rd, Al Olaya, Riyadh 12313, Saudi Arabia' },
+    { country: 'Libya', label: 'Branch', address: 'Mohamed Elmegareif St., Tripoli, Libya' },
   ],
   /** Social profile URLs. The profile lists handles only — paste full URLs to show icons. */
   social: {

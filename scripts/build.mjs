@@ -83,7 +83,7 @@ const orgLd = {
   logo: `${siteUrl}/images/brand/logo-dark-full.png`, image: `${siteUrl}/images/brand/logo-dark-full.png`,
   description: 'Industrial automation, electrical and control systems engineering, LV panel building and PV solar EPC for heavy industry across the Middle East and Africa.',
   email: 'contact@asecautomation.com', telephone: '+20 106 564 8082',
-  address: { '@type': 'PostalAddress', streetAddress: '9 Street 286, El-Basatin Sharkeya', addressLocality: 'Maadi, Cairo', postalCode: '4234220', addressCountry: 'EG' },
+  address: { '@type': 'PostalAddress', streetAddress: '9 Street 286, New Maadi', addressLocality: 'Cairo', postalCode: '4234220', addressCountry: 'EG' },
   sameAs: ['https://www.linkedin.com/company/3069601/'],
   areaServed: ['Egypt', 'Saudi Arabia', 'United Arab Emirates', 'Libya', 'Middle East', 'Africa'],
   knowsAbout: ['Industrial automation', 'PLC', 'SCADA', 'DCS', 'Electrical engineering', 'LV panel building', 'PV solar EPC', 'Cement industry'],

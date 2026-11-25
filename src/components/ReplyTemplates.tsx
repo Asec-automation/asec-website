@@ -100,7 +100,7 @@ export function ReplyTemplates({ name, email, position, interview, onSchedule, o
             {cc.trim() && <div className="rt__meta"><span>CC</span><b>{cc}</b></div>}
             <div className="rt__meta"><span>Subject</span><b>{mail.subject}</b></div>
             <div className="rt__mail"><pre>{mail.body}</pre>
-              <div className="rt__sig" aria-label="Outlook signature (added automatically)"><img src="/images/brand/logo-dark-full.png" alt="ASEC Automation" /><div><b>Recruitment Team</b><span>ASEC Automation · Careers</span><small>careers@asecautomation.com</small><small>9 Street 286, El-Basatin Sharkeya, Maadi, Cairo, Egypt</small><small>www.asecautomation.com · <em>LinkedIn</em></small></div></div></div>
+              <div className="rt__sig" aria-label="Outlook signature (added automatically)"><img src="/images/brand/logo-dark-full.png" alt="ASEC Automation" /><div><b>Recruitment Team</b><span>ASEC Automation · Careers</span><small>careers@asecautomation.com</small><small>9 Street 286, New Maadi, Cairo, Egypt</small><small>www.asecautomation.com · <em>LinkedIn</em></small></div></div></div>
           </div>
           <div className="rt__actions">
             <button type="button" className="btn btn--blue" onClick={send} disabled={!ready}><LuMail aria-hidden /> {mail.action}</button>
